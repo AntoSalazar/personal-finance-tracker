@@ -4,12 +4,27 @@ import { useSession } from "@/lib/infrastructure/auth/auth-client"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/lib/presentation/components/ui/card"
 import { Button } from "@/lib/presentation/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/lib/presentation/components/ui/dialog"
+import { Input } from "@/lib/presentation/components/ui/input"
+import { Label } from "@/lib/presentation/components/ui/label"
 import { TrendingUp, TrendingDown, Plus } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
+import { useState } from "react"
+import { toast } from "sonner"
 
 export default function CryptoPage() {
   const { data: session, isPending } = useSession()
+  const queryClient = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    symbol: "",
+    name: "",
+    amount: "",
+    purchasePrice: "",
+    purchaseDate: new Date().toISOString().split('T')[0],
+    notes: "",
+  })
 
   // Fetch crypto data
   const { data: cryptoData, isLoading } = useQuery({
@@ -20,6 +35,39 @@ export default function CryptoPage() {
     },
     enabled: !!session,
   })
+
+  // Create crypto holding mutation
+  const createHolding = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await axios.post('/api/crypto', {
+        ...data,
+        amount: parseFloat(data.amount),
+        purchasePrice: parseFloat(data.purchasePrice),
+      })
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crypto'] })
+      setOpen(false)
+      setFormData({
+        symbol: "",
+        name: "",
+        amount: "",
+        purchasePrice: "",
+        purchaseDate: new Date().toISOString().split('T')[0],
+        notes: "",
+      })
+      toast.success("Crypto holding added successfully!")
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || "Failed to add crypto holding")
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    createHolding.mutate(formData)
+  }
 
   if (isPending || isLoading) {
     return <div>Loading...</div>
@@ -48,6 +96,99 @@ export default function CryptoPage() {
           <h2 className="text-3xl font-bold tracking-tight">Crypto Portfolio</h2>
           <p className="text-muted-foreground">Track your cryptocurrency holdings</p>
         </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Crypto Holding
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Crypto Holding</DialogTitle>
+              <DialogDescription>
+                Add a new cryptocurrency to your portfolio
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="symbol">Symbol</Label>
+                  <Input
+                    id="symbol"
+                    placeholder="BTC"
+                    value={formData.symbol}
+                    onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="Bitcoin"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="any"
+                    placeholder="0.5"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="purchasePrice">Purchase Price (USD)</Label>
+                  <Input
+                    id="purchasePrice"
+                    type="number"
+                    step="any"
+                    placeholder="50000"
+                    value={formData.purchasePrice}
+                    onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="purchaseDate">Purchase Date</Label>
+                <Input
+                  id="purchaseDate"
+                  type="date"
+                  value={formData.purchaseDate}
+                  onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Input
+                  id="notes"
+                  placeholder="Add any notes..."
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createHolding.isPending}>
+                  {createHolding.isPending ? "Adding..." : "Add Holding"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="rounded-lg border bg-card p-6">
@@ -65,10 +206,14 @@ export default function CryptoPage() {
       {holdings.length === 0 ? (
         <div className="text-center py-12 border border-dashed rounded-lg">
           <p className="text-muted-foreground mb-4">No crypto holdings yet</p>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Your First Crypto Holding
-          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Your First Crypto Holding
+              </Button>
+            </DialogTrigger>
+          </Dialog>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -74,9 +74,9 @@ export function AppSidebar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="w-full justify-start gap-2">
-              <User className="h-4 w-4" />
-              <div className="flex flex-col items-start text-left">
-                <span className="text-sm font-medium">
+              <User className="h-4 w-4 flex-shrink-0" />
+              <div className="flex flex-col items-start text-left min-w-0 flex-1">
+                <span className="text-sm font-medium truncate w-full">
                   {session?.user?.email || "User"}
                 </span>
                 <span className="text-xs text-muted-foreground">Account</span>
