@@ -1,0 +1,62 @@
+
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: finance-app-db
+    environment:
+      POSTGRES_USER: financeuser
+      POSTGRES_PASSWORD: financepass
+      POSTGRES_DB: financedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U financeuser -d financedb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finance-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: finance-app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://financeuser:financepass@postgres:5432/financedb
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_BETTER_AUTH_URL: http://localhost:3000
+      COINMARKETCAP_API_KEY: ${COINMARKETCAP_API_KEY}
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - finance-network
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src
+      - ./lib:/app/lib
+      - ./prisma:/app/prisma
+      - ./public:/app/public
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./next.config.ts:/app/next.config.ts
+      - ./components.json:/app/components.json
+      # Prevent overwriting node_modules and .next
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  postgres_data:
+
+networks:
+  finance-network:
+    driver: bridge
+

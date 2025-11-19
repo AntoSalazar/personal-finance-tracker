@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, createErrorResponse } from '@/lib/infrastructure/api/auth-middleware';
+import { PrismaCryptoRepository } from '@/lib/infrastructure/database/repositories';
+import { CreateCryptoHoldingUseCase } from '@/lib/application/use-cases/crypto/CreateCryptoHoldingUseCase';
+import { GetCryptoPortfolioUseCase } from '@/lib/application/use-cases/crypto/GetCryptoPortfolioUseCase';
+import { z, ZodError } from 'zod';
+
+const createHoldingSchema = z.object({
+  symbol: z.string().min(1, 'Symbol is required'),
+  name: z.string().min(1, 'Name is required'),
+  amount: z.number().positive('Amount must be positive'),
+  purchasePrice: z.number().positive('Purchase price must be positive'),
+  purchaseDate: z.string().transform((val) => new Date(val)),
+  notes: z.string().optional(),
+});
+
+// GET /api/crypto - Get crypto portfolio
+export const GET = withAuth(async (req: NextRequest, userId: string) => {
+  try {
+    const repository = new PrismaCryptoRepository();
+    const useCase = new GetCryptoPortfolioUseCase(repository);
+
+    const portfolio = await useCase.execute();
+
+    return NextResponse.json(portfolio);
+  } catch (error) {
+    console.error('GET /api/crypto error:', error);
+    return createErrorResponse(error);
+  }
+});
+
+// POST /api/crypto - Create new crypto holding
+export const POST = withAuth(async (req: NextRequest, userId: string) => {
+  try {
+    const body = await req.json();
+    const validatedData = createHoldingSchema.parse(body);
+
+    const repository = new PrismaCryptoRepository();
+    const useCase = new CreateCryptoHoldingUseCase(repository);
+
+    const holding = await useCase.execute(validatedData as any, userId);
+
+    return NextResponse.json(holding, { status: 201 });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.errors },
+        { status: 400 }
+      );
+    }
+    console.error('POST /api/crypto error:', error);
+    return createErrorResponse(error);
+  }
+});

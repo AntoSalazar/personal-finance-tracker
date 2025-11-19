@@ -1,0 +1,217 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// BetterAuth Models
+
+model User {
+  id            String        @id
+  name          String
+  email         String
+  emailVerified Boolean       @default(false)
+  image         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @default(now()) @updatedAt
+  sessions      Session[]
+  authAccounts  AuthAccount[]
+  accounts      Account[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model AuthAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
+// Financial Account Model
+
+model Account {
+  id           String        @id @default(cuid())
+  userId       String // Reference to BetterAuth user
+  name         String
+  type         AccountType
+  balance      Float
+  currency     String        @default("USD")
+  description  String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  INVESTMENT
+  CASH
+  OTHER
+}
+
+model Transaction {
+  id          String               @id @default(cuid())
+  accountId   String
+  amount      Float
+  type        TransactionType
+  description String
+  reason      String?
+  categoryId  String
+  date        DateTime
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  account     Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category    Category             @relation(fields: [categoryId], references: [id])
+  tags        TransactionTagLink[]
+
+  @@index([accountId])
+  @@index([categoryId])
+  @@index([date])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+  TRANSFER
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  color        String?
+  icon         String?
+  type         CategoryType
+  parentId     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  parent       Category?     @relation("CategoryTree", fields: [parentId], references: [id])
+  children     Category[]    @relation("CategoryTree")
+  transactions Transaction[]
+
+  @@map("categories")
+}
+
+enum CategoryType {
+  EXPENSE
+  INCOME
+}
+
+model Tag {
+  id           String               @id @default(cuid())
+  name         String               @unique
+  color        String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  transactions TransactionTagLink[]
+
+  @@map("tags")
+}
+
+model TransactionTagLink {
+  transactionId String
+  tagId         String
+  createdAt     DateTime    @default(now())
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, tagId])
+  @@map("transaction_tags")
+}
+
+model CryptoHolding {
+  id              String   @id @default(cuid())
+  userId          String // Reference to BetterAuth user
+  symbol          String
+  name            String
+  amount          Float
+  purchasePrice   Float
+  purchaseDate    DateTime
+  currentPrice    Float    @default(0)
+  lastPriceUpdate DateTime @default(now())
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([symbol])
+  @@index([userId])
+  @@map("crypto_holdings")
+}
+
+model CryptoPrice {
+  id               String   @id @default(cuid())
+  symbol           String   @unique
+  price            Float
+  marketCap        Float
+  volume24h        Float
+  percentChange24h Float
+  percentChange7d  Float
+  lastUpdated      DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("crypto_prices")
+}
+
+model CryptoPriceHistory {
+  id        String   @id @default(cuid())
+  symbol    String
+  price     Float
+  timestamp DateTime
+  createdAt DateTime @default(now())
+
+  @@index([symbol, timestamp])
+  @@map("crypto_price_history")
+}
