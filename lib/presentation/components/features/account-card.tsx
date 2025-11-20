@@ -9,6 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/lib/presentation/components/ui/dropdown-menu"
+import { motion } from "framer-motion"
+import { cardVariants } from "@/lib/presentation/animations/variants"
 
 interface AccountCardProps {
   id: string
@@ -56,34 +58,56 @@ export function AccountCard({
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center gap-2">
-          <Icon className={`h-5 w-5 ${iconColor}`} />
-          <div>
-            <CardTitle className="text-base font-medium">{name}</CardTitle>
-            <CardDescription className="text-xs">
-              {type.replace("_", " ").toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase())}
-            </CardDescription>
+    <motion.div
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      whileHover="hover"
+      whileTap="tap"
+      layout
+    >
+      <Card className="h-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="flex items-center gap-2">
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            >
+              <Icon className={`h-5 w-5 ${iconColor}`} />
+            </motion.div>
+            <div>
+              <CardTitle className="text-base font-medium">{name}</CardTitle>
+              <CardDescription className="text-xs">
+                {type.replace("_", " ").toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase())}
+              </CardDescription>
+            </div>
           </div>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit?.(id)}>Edit</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete?.(id)} className="text-destructive">
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{formatCurrency(balance)}</div>
-      </CardContent>
-    </Card>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit?.(id)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDelete?.(id)} className="text-destructive">
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardHeader>
+        <CardContent>
+          <motion.div
+            className="text-2xl font-bold"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            {formatCurrency(balance)}
+          </motion.div>
+        </CardContent>
+      </Card>
+    </motion.div>
   )
 }

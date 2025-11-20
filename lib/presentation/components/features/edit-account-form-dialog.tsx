@@ -17,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/lib/presentation/components/ui/dialog"
 import {
   Form,
@@ -48,29 +47,48 @@ const accountSchema = z.object({
 
 type AccountFormValues = z.infer<typeof accountSchema>
 
-interface AccountFormDialogProps {
-  children: React.ReactNode
+interface EditAccountFormDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  account: {
+    id: string
+    name: string
+    type: string
+    balance: number
+    currency: string
+    description?: string | null
+  }
 }
 
-export function AccountFormDialog({ children }: AccountFormDialogProps) {
-  const [open, setOpen] = React.useState(false)
+export function EditAccountFormDialog({ open, onOpenChange, account }: EditAccountFormDialogProps) {
   const queryClient = useQueryClient()
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
     defaultValues: {
-      name: "",
-      type: "CHECKING",
-      balance: "0",
-      currency: "USD",
-      description: "",
+      name: account.name,
+      type: account.type as any,
+      balance: account.balance.toString(),
+      currency: account.currency,
+      description: account.description || "",
     },
   })
 
-  // Create mutation
-  const createMutation = useMutation({
+  // Reset form when account changes
+  React.useEffect(() => {
+    form.reset({
+      name: account.name,
+      type: account.type as any,
+      balance: account.balance.toString(),
+      currency: account.currency,
+      description: account.description || "",
+    })
+  }, [account, form])
+
+  // Update mutation
+  const updateMutation = useMutation({
     mutationFn: async (data: AccountFormValues) => {
-      const response = await axios.post('/api/accounts', {
+      const response = await axios.put(`/api/accounts/${account.id}`, {
         ...data,
         balance: parseFloat(data.balance),
       })
@@ -78,22 +96,20 @@ export function AccountFormDialog({ children }: AccountFormDialogProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] })
-      toast.success("Account created successfully!")
-      setOpen(false)
-      form.reset()
+      toast.success("Account updated successfully!")
+      onOpenChange(false)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to create account")
+      toast.error(error.response?.data?.error || "Failed to update account")
     },
   })
 
   const handleSubmit = (data: AccountFormValues) => {
-    createMutation.mutate(data)
+    updateMutation.mutate(data)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <AnimatePresence>
         {open && (
           <DialogContent className="sm:max-w-[425px]">
@@ -104,9 +120,9 @@ export function AccountFormDialog({ children }: AccountFormDialogProps) {
               transition={{ duration: 0.2 }}
             >
               <DialogHeader>
-                <DialogTitle>Create New Account</DialogTitle>
+                <DialogTitle>Edit Account</DialogTitle>
                 <DialogDescription>
-                  Add a new financial account to track your money.
+                  Update your account details.
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -130,7 +146,7 @@ export function AccountFormDialog({ children }: AccountFormDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Account Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select account type" />
@@ -154,7 +170,7 @@ export function AccountFormDialog({ children }: AccountFormDialogProps) {
               name="balance"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Initial Balance</FormLabel>
+                  <FormLabel>Balance</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="0.00" {...field} />
                   </FormControl>
@@ -180,8 +196,8 @@ export function AccountFormDialog({ children }: AccountFormDialogProps) {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <Button type="submit" disabled={createMutation.isPending}>
-                        {createMutation.isPending ? "Creating..." : "Create Account"}
+                      <Button type="submit" disabled={updateMutation.isPending}>
+                        {updateMutation.isPending ? "Updating..." : "Update Account"}
                       </Button>
                     </motion.div>
                   </DialogFooter>

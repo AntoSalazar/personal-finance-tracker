@@ -9,6 +9,8 @@ import { Button } from "@/lib/presentation/components/ui/button"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
+import { motion } from "framer-motion"
+import { containerVariants, itemVariants, fadeInVariants } from "@/lib/presentation/animations/variants"
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession()
@@ -90,126 +92,202 @@ export default function DashboardPage() {
   const recentTransactions = transactions.slice(0, 4)
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <motion.div
+      initial="initial"
+      animate="animate"
+      variants={fadeInVariants}
+      className="space-y-4"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-center justify-between"
+      >
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
           <p className="text-muted-foreground">
             Welcome back, {session.user?.name || session.user?.email}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild>
-            <Link href="/transactions">
-              <ArrowDownRight className="mr-2 h-4 w-4" />
-              Add Expense
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/transactions">
-              <ArrowUpRight className="mr-2 h-4 w-4" />
-              Add Income
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Total Balance"
-          value={`$${totalBalance.toFixed(2)}`}
-          icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
-          isLoading={isLoading}
-        />
-        <StatsCard
-          title="Total Income"
-          value={`$${totalIncome.toFixed(2)}`}
-          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
-          isLoading={isLoading}
-        />
-        <StatsCard
-          title="Total Expenses"
-          value={`$${totalExpenses.toFixed(2)}`}
-          icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />}
-          isLoading={isLoading}
-        />
-        <StatsCard
-          title="Crypto Value"
-          value={`$${cryptoValue.toFixed(2)}`}
-          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-          isLoading={isLoading}
-        />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>Your latest financial activity</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recentTransactions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No transactions yet</p>
-                <p className="text-sm mt-2">Add your first transaction to get started</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recentTransactions.map((transaction: any) => (
-                  <div key={transaction.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                    <div>
-                      <p className="font-medium">{transaction.description}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(transaction.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span className={`font-medium ${
-                      transaction.type === 'INCOME' ? 'text-green-500' :
-                      transaction.type === 'EXPENSE' ? 'text-red-500' : 'text-blue-500'
-                    }`}>
-                      {transaction.type === 'INCOME' ? '+' : transaction.type === 'EXPENSE' ? '-' : ''}
-                      ${transaction.amount.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <Button variant="outline" className="w-full mt-4" asChild>
-              <Link href="/transactions">View All Transactions</Link>
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="flex gap-2"
+        >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button asChild>
+              <Link href="/transactions">
+                <ArrowDownRight className="mr-2 h-4 w-4" />
+                Add Expense
+              </Link>
             </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Accounts Overview</CardTitle>
-            <CardDescription>Your financial accounts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {accounts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No accounts yet</p>
-                <p className="text-sm mt-2">Add your first account to get started</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {accounts.slice(0, 3).map((account: any) => (
-                  <div key={account.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                    <div>
-                      <p className="font-medium">{account.name}</p>
-                      <p className="text-sm text-muted-foreground">{account.type.replace('_', ' ')}</p>
-                    </div>
-                    <span className="font-medium">${account.balance.toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <Button variant="outline" className="w-full mt-4" asChild>
-              <Link href="/accounts">Manage Accounts</Link>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button asChild variant="outline">
+              <Link href="/transactions">
+                <ArrowUpRight className="mr-2 h-4 w-4" />
+                Add Income
+              </Link>
             </Button>
-          </CardContent>
-        </Card>
+          </motion.div>
+        </motion.div>
+      </motion.div>
+
+      <motion.div
+        variants={containerVariants}
+        initial="initial"
+        animate="animate"
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+      >
+        <motion.div variants={itemVariants}>
+          <StatsCard
+            title="Total Balance"
+            value={`$${totalBalance.toFixed(2)}`}
+            icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
+            isLoading={isLoading}
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatsCard
+            title="Total Income"
+            value={`$${totalIncome.toFixed(2)}`}
+            icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
+            isLoading={isLoading}
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatsCard
+            title="Total Expenses"
+            value={`$${totalExpenses.toFixed(2)}`}
+            icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />}
+            isLoading={isLoading}
+          />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatsCard
+            title="Crypto Value"
+            value={`$${cryptoValue.toFixed(2)}`}
+            icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+            isLoading={isLoading}
+          />
+        </motion.div>
+      </motion.div>
+
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-7">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="lg:col-span-4"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Transactions</CardTitle>
+              <CardDescription>Your latest financial activity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentTransactions.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  <p>No transactions yet</p>
+                  <p className="text-sm mt-2">Add your first transaction to get started</p>
+                </motion.div>
+              ) : (
+                <div className="space-y-4">
+                  {recentTransactions.map((transaction: any) => (
+                    <motion.div
+                      key={transaction.id}
+                      whileHover={{ x: 4 }}
+                      className="flex items-center justify-between border-b pb-3 last:border-0"
+                    >
+                      <div>
+                        <p className="font-medium">{transaction.description}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <span className={`font-medium ${
+                        transaction.type === 'INCOME' ? 'text-green-500' :
+                        transaction.type === 'EXPENSE' ? 'text-red-500' : 'text-blue-500'
+                      }`}>
+                        {transaction.type === 'INCOME' ? '+' : transaction.type === 'EXPENSE' ? '-' : ''}
+                        ${transaction.amount.toFixed(2)}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button variant="outline" className="w-full mt-4" asChild>
+                  <Link href="/transactions">View All Transactions</Link>
+                </Button>
+              </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.25 }}
+          className="lg:col-span-3"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Accounts Overview</CardTitle>
+              <CardDescription>Your financial accounts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {accounts.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.35 }}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  <p>No accounts yet</p>
+                  <p className="text-sm mt-2">Add your first account to get started</p>
+                </motion.div>
+              ) : (
+                <div className="space-y-4">
+                  {accounts.slice(0, 3).map((account: any) => (
+                    <motion.div
+                      key={account.id}
+                      whileHover={{ x: 4 }}
+                      className="flex items-center justify-between border-b pb-3 last:border-0"
+                    >
+                      <div>
+                        <p className="font-medium">{account.name}</p>
+                        <p className="text-sm text-muted-foreground">{account.type.replace('_', ' ')}</p>
+                      </div>
+                      <span className="font-medium">
+                        ${account.balance.toFixed(2)}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button variant="outline" className="w-full mt-4" asChild>
+                  <Link href="/accounts">Manage Accounts</Link>
+                </Button>
+              </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   )
 }

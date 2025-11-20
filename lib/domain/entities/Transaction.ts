@@ -6,6 +6,7 @@
 export interface Transaction {
   id: string;
   accountId: string;
+  toAccountId?: string; // For transfers: destination account
   amount: number;
   type: TransactionType;
   description: string;
@@ -25,6 +26,7 @@ export enum TransactionType {
 
 export interface CreateTransactionDTO {
   accountId: string;
+  toAccountId?: string; // Required for TRANSFER type
   amount: number;
   type: TransactionType;
   description: string;
@@ -36,6 +38,7 @@ export interface CreateTransactionDTO {
 
 export interface UpdateTransactionDTO {
   accountId?: string;
+  toAccountId?: string;
   amount?: number;
   type?: TransactionType;
   description?: string;

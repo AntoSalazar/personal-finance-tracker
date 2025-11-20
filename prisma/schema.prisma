@@ -103,6 +103,7 @@ enum AccountType {
 model Transaction {
   id          String               @id @default(cuid())
   accountId   String
+  toAccountId String? // For transfers: destination account
   amount      Float
   type        TransactionType
   description String

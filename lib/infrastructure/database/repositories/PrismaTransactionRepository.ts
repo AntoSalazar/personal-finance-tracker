@@ -148,6 +148,16 @@ export class PrismaTransactionRepository implements ITransactionRepository {
         where: { id: data.accountId },
         data: { balance: { decrement: data.amount } },
       });
+    } else if (data.type === 'TRANSFER' && data.toAccountId) {
+      // For transfers: decrement from source, increment to destination
+      await prisma.account.update({
+        where: { id: data.accountId },
+        data: { balance: { decrement: data.amount } },
+      });
+      await prisma.account.update({
+        where: { id: data.toAccountId },
+        data: { balance: { increment: data.amount } },
+      });
     }
 
     return transaction as any;
@@ -242,6 +252,16 @@ export class PrismaTransactionRepository implements ITransactionRepository {
         await prisma.account.update({
           where: { id: transaction.accountId },
           data: { balance: { increment: transaction.amount } },
+        });
+      } else if (transaction.type === 'TRANSFER' && transaction.toAccountId) {
+        // Reverse transfer: increment source, decrement destination
+        await prisma.account.update({
+          where: { id: transaction.accountId },
+          data: { balance: { increment: transaction.amount } },
+        });
+        await prisma.account.update({
+          where: { id: transaction.toAccountId },
+          data: { balance: { decrement: transaction.amount } },
         });
       }
     }
