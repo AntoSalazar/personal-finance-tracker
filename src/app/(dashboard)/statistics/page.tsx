@@ -8,7 +8,6 @@ import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
 import { containerVariants, fadeInVariants } from "@/lib/presentation/animations/variants"
 import { useState } from "react"
-import { SummaryCards } from "@/lib/presentation/components/statistics/SummaryCards"
 import { IncomeExpenseChart } from "@/lib/presentation/components/statistics/IncomeExpenseChart"
 import { ExpenseBreakdownChart } from "@/lib/presentation/components/statistics/ExpenseBreakdownChart"
 import { AccountBalancesChart } from "@/lib/presentation/components/statistics/AccountBalancesChart"
@@ -70,88 +69,74 @@ export default function StatisticsPage() {
       initial="initial"
       animate="animate"
       variants={fadeInVariants}
-      className="space-y-6 p-6"
+      className="space-y-4 p-4 md:p-6 max-w-[1600px] mx-auto"
     >
+      {/* Header with tabs inline for desktop */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex flex-col gap-2"
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
-        <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-          Statistics
-        </h2>
-        <p className="text-muted-foreground">
-          Comprehensive financial analytics and insights
-        </p>
-      </motion.div>
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Financial Overview
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Track your wealth and spending patterns
+          </p>
+        </div>
 
-      {/* Period Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-      >
-        <Tabs defaultValue="month" value={period} onValueChange={setPeriod} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-4 bg-muted/50 p-1">
-            <TabsTrigger value="month" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Month</TabsTrigger>
-            <TabsTrigger value="quarter" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Quarter</TabsTrigger>
-            <TabsTrigger value="year" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Year</TabsTrigger>
-            <TabsTrigger value="all" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">All Time</TabsTrigger>
+        {/* Period Tabs - Inline on desktop */}
+        <Tabs defaultValue="month" value={period} onValueChange={setPeriod}>
+          <TabsList className="grid w-full md:w-auto grid-cols-4 bg-muted/50 p-1">
+            <TabsTrigger value="month" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all text-xs md:text-sm">Month</TabsTrigger>
+            <TabsTrigger value="quarter" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all text-xs md:text-sm">Quarter</TabsTrigger>
+            <TabsTrigger value="year" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all text-xs md:text-sm">Year</TabsTrigger>
+            <TabsTrigger value="all" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all text-xs md:text-sm">All</TabsTrigger>
           </TabsList>
         </Tabs>
-
-        <div className="space-y-6 mt-4">
-          {/* Summary Cards - Static with prop updates */}
-          <SummaryCards summary={summary} />
-
-          {/* Charts Section - Animated transitions */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={period}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-6"
-            >
-              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-7">
-                {/* Monthly Trends Line Chart */}
-                <div className="lg:col-span-4 h-full">
-                  <IncomeExpenseChart data={monthlyTrends} />
-                </div>
-
-                {/* Expense Category Breakdown Pie Chart */}
-                <div className="lg:col-span-3 h-full">
-                  <ExpenseBreakdownChart data={categoryBreakdown} />
-                </div>
-              </div>
-
-              {/* Second Row of Charts */}
-              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-                {/* Account Balances Bar Chart */}
-                <div className="h-full">
-                  <AccountBalancesChart data={accountBalances} />
-                </div>
-
-                {/* Top Spending */}
-                <div className="h-full">
-                  <TopExpensesList data={topSpending} />
-                </div>
-              </div>
-
-              {/* Net Worth Card */}
-              <div>
-                <NetWorthCard 
-                  netWorth={summary.netWorth} 
-                  accountCount={accountBalances.length} 
-                  netIncome={summary.netIncome}
-                />
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
       </motion.div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={period}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-4"
+        >
+          {/* Hero Section - Net Worth */}
+          <NetWorthCard
+            netWorth={summary.netWorth}
+            accountCount={accountBalances.length}
+            netIncome={summary.netIncome}
+          />
+
+          {/* Main Charts Grid */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            {/* Monthly Trends - Takes 2 columns */}
+            <div className="lg:col-span-2">
+              <IncomeExpenseChart data={monthlyTrends} />
+            </div>
+
+            {/* Expense Breakdown - Takes 1 column */}
+            <div className="lg:col-span-1">
+              <ExpenseBreakdownChart data={categoryBreakdown} />
+            </div>
+          </div>
+
+          {/* Secondary Charts Grid */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* Account Balances */}
+            <AccountBalancesChart data={accountBalances} />
+
+            {/* Top Spending */}
+            <TopExpensesList data={topSpending} />
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </motion.div>
   )
 }

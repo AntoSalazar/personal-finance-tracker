@@ -61,10 +61,14 @@ GOOGLE_CLIENT_SECRET="your-google-client-secret"
 docker-compose up -d
 ```
 
-5. Run database migrations:
+5. Run database migrations (first time setup):
 ```bash
-docker-compose exec app npx prisma migrate deploy
+docker-compose exec app npx prisma migrate dev
 ```
+   This will:
+   - Apply all pending migrations to the database
+   - Generate the Prisma Client
+   - Ensure your database schema is up to date
 
 6. Access the app at [http://localhost:3000](http://localhost:3000)
 
@@ -79,15 +83,21 @@ npm install
 
 2. Set up your `.env` file (see above)
 
-3. Run database migrations:
+3. Set up the database (first time only):
 ```bash
-npx prisma migrate deploy
+# Apply migrations and generate Prisma Client
+npx prisma migrate dev
+
+# Alternatively, if migrations already exist and you just need to sync:
+npx prisma db push
 ```
 
 4. Start the development server:
 ```bash
 npm run dev
 ```
+
+> **Note**: If you encounter database schema errors like "column does not exist", run `npx prisma migrate dev` to ensure your database is up to date with the schema.
 
 ## 📁 Project Structure
 
@@ -156,6 +166,37 @@ Track your crypto investments:
 - Add holdings with purchase price and date
 - Monitor current value and profit/loss
 - Automatic price updates (if configured)
+
+## 🔧 Troubleshooting
+
+### Database Schema Errors
+
+If you encounter errors like:
+```
+The column `transactions.toAccountId` does not exist in the current database.
+```
+
+This means your database schema is out of sync with the Prisma schema. Fix it by running:
+
+```bash
+# For local development
+npx prisma migrate dev
+
+# For Docker
+docker-compose exec app npx prisma migrate dev
+```
+
+### Reset Database (WARNING: Deletes all data)
+
+If you need to completely reset your database:
+
+```bash
+# Local
+npx prisma migrate reset
+
+# Docker
+docker-compose exec app npx prisma migrate reset
+```
 
 ## 🔧 API Endpoints
 
