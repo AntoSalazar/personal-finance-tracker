@@ -25,6 +25,14 @@ export class PrismaAccountRepository implements IAccountRepository {
     return accounts as Account[];
   }
 
+  async findByUserId(userId: string): Promise<Account[]> {
+    const accounts = await prisma.account.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return accounts as Account[];
+  }
+
   async create(data: CreateAccountDTO): Promise<Account> {
     const account = await prisma.account.create({
       data: {

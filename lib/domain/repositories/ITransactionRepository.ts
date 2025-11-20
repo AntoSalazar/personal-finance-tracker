@@ -11,6 +11,7 @@ export interface ITransactionRepository {
   findByAccountId(accountId: string): Promise<Transaction[]>;
   findByCategoryId(categoryId: string): Promise<Transaction[]>;
   findByDateRange(startDate: Date, endDate: Date): Promise<Transaction[]>;
+  findByUserId(userId: string, filter?: TransactionFilter): Promise<Transaction[]>;
   create(data: CreateTransactionDTO): Promise<Transaction>;
   update(id: string, data: UpdateTransactionDTO): Promise<Transaction>;
   delete(id: string): Promise<void>;
