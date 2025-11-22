@@ -8,6 +8,8 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import axios from "axios"
+import { motion, AnimatePresence } from "framer-motion"
+import { Plus } from "lucide-react"
 
 import { Button } from "@/lib/presentation/components/ui/button"
 import {
@@ -35,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/lib/presentation/components/ui/select"
+import { CategoryFormDialog } from "./category-form-dialog"
 
 const transactionSchema = z.object({
   accountId: z.string().min(1, "Account is required"),
@@ -55,6 +58,7 @@ interface TransactionFormDialogProps {
 
 export function TransactionFormDialog({ children }: TransactionFormDialogProps) {
   const [open, setOpen] = React.useState(false)
+  const [categoryDialogOpen, setCategoryDialogOpen] = React.useState(false)
   const queryClient = useQueryClient()
 
   // Fetch accounts for the dropdown
@@ -115,142 +119,222 @@ export function TransactionFormDialog({ children }: TransactionFormDialogProps) 
   const accounts = accountsData?.accounts || []
   const categories = categoriesData?.categories || []
 
+  const selectedType = form.watch("type")
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add Transaction</DialogTitle>
-          <DialogDescription>
-            Record a new income or expense transaction.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="INCOME">Income</SelectItem>
-                      <SelectItem value="EXPENSE">Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="accountId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Account</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select account" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {accounts.length === 0 ? (
-                        <SelectItem value="none" disabled>No accounts available</SelectItem>
-                      ) : (
-                        accounts.map((account: any) => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.name}
-                          </SelectItem>
-                        ))
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <AnimatePresence>
+          {open && (
+            <DialogContent className="sm:max-w-[650px]">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <DialogHeader>
+                  <DialogTitle>Add Transaction</DialogTitle>
+                  <DialogDescription>
+                    Record a new income or expense transaction.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                    {/* Type selector - Full width */}
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="INCOME">Income</SelectItem>
+                              <SelectItem value="EXPENSE">Expense</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Grocery shopping" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Amount</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories.length === 0 ? (
-                        <SelectItem value="none" disabled>No categories available</SelectItem>
-                      ) : (
-                        categories.map((category: any) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))
+                    />
+
+                    {/* Two column grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="accountId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Account</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select account" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {accounts.length === 0 ? (
+                                  <SelectItem value="none" disabled>No accounts available</SelectItem>
+                                ) : (
+                                  accounts.map((account: any) => (
+                                    <SelectItem key={account.id} value={account.id}>
+                                      {account.name}
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Amount</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Description - Full width */}
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Grocery shopping" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="submit" disabled={createMutation.isPending || accounts.length === 0 || categories.length === 0}>
-                {createMutation.isPending ? "Adding..." : "Add Transaction"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                    />
+
+                    {/* Two column grid for category and date */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="categoryId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center justify-between">
+                              <span>Category</span>
+                              {categories.length === 0 && (
+                                <CategoryFormDialog
+                                  open={categoryDialogOpen}
+                                  onOpenChange={setCategoryDialogOpen}
+                                  defaultType={selectedType}
+                                >
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2 text-xs"
+                                    onClick={(e) => {
+                                      e.preventDefault()
+                                      setCategoryDialogOpen(true)
+                                    }}
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Create
+                                  </Button>
+                                </CategoryFormDialog>
+                              )}
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {categories.length === 0 ? (
+                                  <SelectItem value="none" disabled>No categories yet</SelectItem>
+                                ) : (
+                                  <>
+                                    {categories.map((category: any) => (
+                                      <SelectItem key={category.id} value={category.id}>
+                                        {category.name}
+                                      </SelectItem>
+                                    ))}
+                                    <div className="px-2 py-1.5 border-t mt-1">
+                                      <CategoryFormDialog
+                                        open={categoryDialogOpen}
+                                        onOpenChange={setCategoryDialogOpen}
+                                        defaultType={selectedType}
+                                      >
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="sm"
+                                          className="w-full justify-start h-8 text-xs"
+                                          onClick={(e) => {
+                                            e.preventDefault()
+                                            setCategoryDialogOpen(true)
+                                          }}
+                                        >
+                                          <Plus className="h-3 w-3 mr-2" />
+                                          Create New Category
+                                        </Button>
+                                      </CategoryFormDialog>
+                                    </div>
+                                  </>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <DialogFooter>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Button type="submit" disabled={createMutation.isPending || accounts.length === 0}>
+                          {createMutation.isPending ? "Adding..." : "Add Transaction"}
+                        </Button>
+                      </motion.div>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </motion.div>
+            </DialogContent>
+          )}
+        </AnimatePresence>
+      </Dialog>
+    </>
   )
 }
