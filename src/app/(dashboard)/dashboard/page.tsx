@@ -4,16 +4,39 @@ import { useSession } from "@/lib/infrastructure/auth/auth-client"
 import { redirect } from "next/navigation"
 import { StatsCard } from "@/lib/presentation/components/features/stats-card"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/lib/presentation/components/ui/card"
-import { Wallet, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { Wallet, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight, Download } from "lucide-react"
 import { Button } from "@/lib/presentation/components/ui/button"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 import { motion } from "framer-motion"
 import { containerVariants, itemVariants, fadeInVariants } from "@/lib/presentation/animations/variants"
+import { toast } from "sonner"
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession()
+
+  const handleExport = async () => {
+    try {
+      toast.info('Generating Excel export...')
+      const response = await axios.get('/api/export', {
+        responseType: 'blob',
+      })
+
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `finance-export-${new Date().toISOString().split('T')[0]}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      toast.success('Excel file downloaded successfully!')
+    } catch (error) {
+      toast.error('Failed to export data')
+      console.error('Export error:', error)
+    }
+  }
 
   // Fetch accounts data
   const { data: accountsData, isLoading: accountsLoading } = useQuery({
@@ -116,6 +139,12 @@ export default function DashboardPage() {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="flex gap-2"
         >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button onClick={handleExport} variant="secondary">
+              <Download className="mr-2 h-4 w-4" />
+              Export to Excel
+            </Button>
+          </motion.div>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button asChild>
               <Link href="/transactions">
