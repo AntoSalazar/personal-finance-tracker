@@ -11,16 +11,18 @@ datasource db {
 // BetterAuth Models
 
 model User {
-  id            String        @id
+  id            String         @id
   name          String
   email         String
-  emailVerified Boolean       @default(false)
+  emailVerified Boolean        @default(false)
   image         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @default(now()) @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
   sessions      Session[]
   authAccounts  AuthAccount[]
   accounts      Account[]
+  debts         Debt[]
+  subscriptions Subscription[]
 
   @@unique([email])
   @@map("user")
@@ -74,18 +76,19 @@ model Verification {
 // Financial Account Model
 
 model Account {
-  id           String        @id @default(cuid())
-  userId       String // Reference to BetterAuth user
-  name         String
-  type         AccountType
-  balance      Float
-  currency     String        @default("USD")
-  description  String?
-  isActive     Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  transactions Transaction[]
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String         @id @default(cuid())
+  userId        String // Reference to BetterAuth user
+  name          String
+  type          AccountType
+  balance       Float
+  currency      String         @default("USD")
+  description   String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  transactions  Transaction[]
+  subscriptions Subscription[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("accounts")
@@ -129,18 +132,19 @@ enum TransactionType {
 }
 
 model Category {
-  id           String        @id @default(cuid())
-  name         String
-  description  String?
-  color        String?
-  icon         String?
-  type         CategoryType
-  parentId     String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  parent       Category?     @relation("CategoryTree", fields: [parentId], references: [id])
-  children     Category[]    @relation("CategoryTree")
-  transactions Transaction[]
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  color         String?
+  icon          String?
+  type          CategoryType
+  parentId      String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  parent        Category?      @relation("CategoryTree", fields: [parentId], references: [id])
+  children      Category[]     @relation("CategoryTree")
+  transactions  Transaction[]
+  subscriptions Subscription[]
 
   @@map("categories")
 }
@@ -215,4 +219,64 @@ model CryptoPriceHistory {
 
   @@index([symbol, timestamp])
   @@map("crypto_price_history")
+}
+
+// Debt Tracking Model
+
+model Debt {
+  id            String       @id @default(cuid())
+  userId        String // Reference to BetterAuth user
+  personName    String
+  amount        Float
+  description   String?
+  dueDate       DateTime?
+  isPaid        Boolean      @default(false)
+  paidDate      DateTime?
+  transactionId String? // Reference to transaction created when paid
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isPaid])
+  @@map("debts")
+}
+
+// Subscription Tracking Model
+
+model Subscription {
+  id              String                @id @default(cuid())
+  userId          String // Reference to BetterAuth user
+  name            String
+  amount          Float
+  frequency       SubscriptionFrequency
+  nextBillingDate DateTime
+  accountId       String // Which account to deduct from
+  categoryId      String // Transaction category
+  status          SubscriptionStatus    @default(ACTIVE)
+  notes           String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account         Account               @relation(fields: [accountId], references: [id])
+  category        Category              @relation(fields: [categoryId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([nextBillingDate])
+  @@map("subscriptions")
+}
+
+enum SubscriptionFrequency {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
 }

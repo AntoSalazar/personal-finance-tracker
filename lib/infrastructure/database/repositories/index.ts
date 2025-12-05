@@ -4,3 +4,5 @@ export { PrismaTransactionRepository } from './PrismaTransactionRepository';
 export { PrismaCategoryRepository } from './PrismaCategoryRepository';
 export { PrismaTagRepository } from './PrismaTagRepository';
 export { PrismaCryptoRepository } from './PrismaCryptoRepository';
+export { PrismaDebtRepository } from './PrismaDebtRepository';
+export { PrismaSubscriptionRepository } from './PrismaSubscriptionRepository';
