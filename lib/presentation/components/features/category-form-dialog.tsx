@@ -51,16 +51,26 @@ interface CategoryFormDialogProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   defaultType?: "INCOME" | "EXPENSE"
+  category?: {
+    id: string
+    name: string
+    type: "INCOME" | "EXPENSE"
+    description?: string
+    color?: string
+    icon?: string
+  }
 }
 
 export function CategoryFormDialog({
   children,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
-  defaultType = "EXPENSE"
+  defaultType = "EXPENSE",
+  category
 }: CategoryFormDialogProps) {
   const [internalOpen, setInternalOpen] = React.useState(false)
   const queryClient = useQueryClient()
+  const isEditing = !!category
 
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = controlledOnOpenChange || setInternalOpen
@@ -68,23 +78,41 @@ export function CategoryFormDialog({
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
-      name: "",
-      type: defaultType,
-      description: "",
-      color: "#3b82f6",
-      icon: "",
+      name: category?.name || "",
+      type: category?.type || defaultType,
+      description: category?.description || "",
+      color: category?.color || "#3b82f6",
+      icon: category?.icon || "",
     },
   })
 
-  // Create mutation
-  const createMutation = useMutation({
+  // Reset form when category changes or dialog opens
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        name: category?.name || "",
+        type: category?.type || defaultType,
+        description: category?.description || "",
+        color: category?.color || "#3b82f6",
+        icon: category?.icon || "",
+      })
+    }
+  }, [open, category, defaultType, form])
+
+  // Create/Update mutation
+  const saveMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
-      const response = await axios.post('/api/categories', data)
-      return response.data
+      if (isEditing) {
+        const response = await axios.put(`/api/categories/${category.id}`, data)
+        return response.data
+      } else {
+        const response = await axios.post('/api/categories', data)
+        return response.data
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      toast.success("Category created successfully!")
+      toast.success(isEditing ? "Category updated successfully!" : "Category created successfully!")
       setOpen(false)
       form.reset({
         name: "",
@@ -95,12 +123,12 @@ export function CategoryFormDialog({
       })
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to create category")
+      toast.error(error.response?.data?.error || (isEditing ? "Failed to update category" : "Failed to create category"))
     },
   })
 
   const handleSubmit = (data: CategoryFormValues) => {
-    createMutation.mutate(data)
+    saveMutation.mutate(data)
   }
 
   return (
@@ -116,9 +144,9 @@ export function CategoryFormDialog({
               transition={{ duration: 0.2 }}
             >
               <DialogHeader>
-                <DialogTitle>Create New Category</DialogTitle>
+                <DialogTitle>{isEditing ? "Edit Category" : "Create New Category"}</DialogTitle>
                 <DialogDescription>
-                  Add a new category to organize your transactions.
+                  {isEditing ? "Update the category information." : "Add a new category to organize your transactions."}
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -197,8 +225,11 @@ export function CategoryFormDialog({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <Button type="submit" disabled={createMutation.isPending}>
-                        {createMutation.isPending ? "Creating..." : "Create Category"}
+                      <Button type="submit" disabled={saveMutation.isPending}>
+                        {saveMutation.isPending
+                          ? (isEditing ? "Updating..." : "Creating...")
+                          : (isEditing ? "Update Category" : "Create Category")
+                        }
                       </Button>
                     </motion.div>
                   </DialogFooter>

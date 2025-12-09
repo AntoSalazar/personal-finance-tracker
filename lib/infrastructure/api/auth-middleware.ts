@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../auth/auth';
 
-export function withAuth(
-  handler: (req: NextRequest, userId: string) => Promise<NextResponse>
+export function withAuth<T = any>(
+  handler: (req: NextRequest, userId: string, context?: T) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest, context?: T) => {
     try {
       // Get session from BetterAuth
       const session = await auth.api.getSession({
@@ -15,8 +15,8 @@ export function withAuth(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
-      // Call the handler with userId
-      return handler(req, session.user.id);
+      // Call the handler with userId and context (which includes params for dynamic routes)
+      return handler(req, session.user.id, context);
     } catch (error: any) {
       console.error('Auth middleware error:', error);
       return NextResponse.json(

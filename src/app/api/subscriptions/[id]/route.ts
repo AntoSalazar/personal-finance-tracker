@@ -19,12 +19,13 @@ const updateSubscriptionSchema = z.object({
 });
 
 // GET /api/subscriptions/[id] - Get specific subscription
-export const GET = withAuth(async (req: NextRequest, userId: string, { params }: { params: { id: string } }) => {
+export const GET = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
+    const { id } = await context.params;
     const repository = new PrismaSubscriptionRepository();
     const useCase = new GetSubscriptionsUseCase(repository);
 
-    const subscription = await useCase.getById(params.id);
+    const subscription = await useCase.getById(id);
 
     if (!subscription) {
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
@@ -42,8 +43,9 @@ export const GET = withAuth(async (req: NextRequest, userId: string, { params }:
 });
 
 // PUT /api/subscriptions/[id] - Update subscription
-export const PUT = withAuth(async (req: NextRequest, userId: string, { params }: { params: { id: string } }) => {
+export const PUT = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
+    const { id } = await context.params;
     const body = await req.json();
     const validatedData = updateSubscriptionSchema.parse(body);
 
@@ -51,7 +53,7 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, { params }:
     const accountRepository = new PrismaAccountRepository();
     const useCase = new UpdateSubscriptionUseCase(subscriptionRepository, accountRepository);
 
-    const subscription = await useCase.execute(params.id, userId, validatedData);
+    const subscription = await useCase.execute(id, userId, validatedData);
 
     return NextResponse.json(subscription);
   } catch (error) {
@@ -67,12 +69,13 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, { params }:
 });
 
 // DELETE /api/subscriptions/[id] - Delete subscription
-export const DELETE = withAuth(async (req: NextRequest, userId: string, { params }: { params: { id: string } }) => {
+export const DELETE = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
+    const { id } = await context.params;
     const repository = new PrismaSubscriptionRepository();
     const useCase = new DeleteSubscriptionUseCase(repository);
 
-    await useCase.execute(params.id, userId);
+    await useCase.execute(id, userId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

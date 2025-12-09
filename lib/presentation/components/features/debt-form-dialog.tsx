@@ -45,46 +45,88 @@ type DebtFormValues = z.infer<typeof debtSchema>
 
 interface DebtFormDialogProps {
   children: React.ReactNode
+  debt?: {
+    id: string
+    personName: string
+    amount: number
+    description?: string
+    dueDate?: string
+    notes?: string
+  }
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function DebtFormDialog({ children }: DebtFormDialogProps) {
-  const [open, setOpen] = React.useState(false)
+export function DebtFormDialog({ children, debt, open: controlledOpen, onOpenChange }: DebtFormDialogProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false)
   const queryClient = useQueryClient()
+  const isEditing = !!debt
+
+  // Use controlled or uncontrolled state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setOpen = (value: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(value)
+    } else {
+      setInternalOpen(value)
+    }
+  }
 
   const form = useForm<DebtFormValues>({
     resolver: zodResolver(debtSchema),
     defaultValues: {
-      personName: "",
-      amount: "",
-      description: "",
-      dueDate: "",
-      notes: "",
+      personName: debt?.personName || "",
+      amount: debt?.amount?.toString() || "",
+      description: debt?.description || "",
+      dueDate: debt?.dueDate ? format(new Date(debt.dueDate), "yyyy-MM-dd") : "",
+      notes: debt?.notes || "",
     },
   })
 
-  // Create mutation
-  const createMutation = useMutation({
+  // Reset form when debt changes or dialog opens
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        personName: debt?.personName || "",
+        amount: debt?.amount?.toString() || "",
+        description: debt?.description || "",
+        dueDate: debt?.dueDate ? format(new Date(debt.dueDate), "yyyy-MM-dd") : "",
+        notes: debt?.notes || "",
+      })
+    }
+  }, [open, debt, form])
+
+  // Create/Update mutation
+  const saveMutation = useMutation({
     mutationFn: async (data: DebtFormValues) => {
-      const response = await axios.post('/api/debts', {
+      const payload = {
         ...data,
         amount: parseFloat(data.amount),
         dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
-      })
-      return response.data
+      }
+
+      if (isEditing) {
+        const response = await axios.put(`/api/debts/${debt.id}`, payload)
+        return response.data
+      } else {
+        const response = await axios.post('/api/debts', payload)
+        return response.data
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['debts'] })
-      toast.success("Debt added successfully!")
+      queryClient.invalidateQueries({ queryKey: ['debts', 'summary'] })
+      toast.success(isEditing ? "Debt updated successfully!" : "Debt added successfully!")
       setOpen(false)
       form.reset()
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to add debt")
+      toast.error(error.response?.data?.error || (isEditing ? "Failed to update debt" : "Failed to add debt"))
     },
   })
 
   const handleSubmit = (data: DebtFormValues) => {
-    createMutation.mutate(data)
+    saveMutation.mutate(data)
   }
 
   return (
@@ -100,9 +142,9 @@ export function DebtFormDialog({ children }: DebtFormDialogProps) {
               transition={{ duration: 0.2 }}
             >
               <DialogHeader>
-                <DialogTitle>Add Debt</DialogTitle>
+                <DialogTitle>{isEditing ? "Edit Debt" : "Add Debt"}</DialogTitle>
                 <DialogDescription>
-                  Record money that someone owes you.
+                  {isEditing ? "Update the debt information." : "Record money that someone owes you."}
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -188,8 +230,11 @@ export function DebtFormDialog({ children }: DebtFormDialogProps) {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <Button type="submit" disabled={createMutation.isPending}>
-                        {createMutation.isPending ? "Adding..." : "Add Debt"}
+                      <Button type="submit" disabled={saveMutation.isPending}>
+                        {saveMutation.isPending
+                          ? (isEditing ? "Updating..." : "Adding...")
+                          : (isEditing ? "Update Debt" : "Add Debt")
+                        }
                       </Button>
                     </motion.div>
                   </DialogFooter>

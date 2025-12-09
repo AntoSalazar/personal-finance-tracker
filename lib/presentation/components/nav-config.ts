@@ -1,4 +1,4 @@
-import { Home, Wallet, ArrowLeftRight, Bitcoin, Settings, LayoutDashboard, BarChart3, Users, Repeat } from "lucide-react"
+import { Home, Wallet, ArrowLeftRight, Bitcoin, Settings, LayoutDashboard, BarChart3, Users, Repeat, Tags } from "lucide-react"
 
 export const navItems = [
   {
@@ -15,6 +15,11 @@ export const navItems = [
     title: "Transactions",
     href: "/transactions",
     icon: ArrowLeftRight,
+  },
+  {
+    title: "Categories",
+    href: "/categories",
+    icon: Tags,
   },
   {
     title: "Debts",

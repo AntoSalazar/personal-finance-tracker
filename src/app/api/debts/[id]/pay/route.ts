@@ -12,8 +12,9 @@ const markAsPaidSchema = z.object({
 });
 
 // POST /api/debts/[id]/pay - Mark debt as paid (creates income transaction)
-export const POST = withAuth(async (req: NextRequest, userId: string, { params }: { params: { id: string } }) => {
+export const POST = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
+    const { id } = await context.params;
     const body = await req.json();
     const validatedData = markAsPaidSchema.parse(body);
 
@@ -22,7 +23,7 @@ export const POST = withAuth(async (req: NextRequest, userId: string, { params }
     const useCase = new MarkDebtAsPaidUseCase(debtRepository, accountRepository);
 
     const debt = await useCase.execute({
-      debtId: params.id,
+      debtId: id,
       userId,
       accountId: validatedData.accountId,
       categoryId: validatedData.categoryId,

@@ -15,13 +15,9 @@ const updateAccountSchema = z.object({
 });
 
 // GET /api/accounts/[id] - Get account by ID
-export const GET = withAuth(async (req: NextRequest, userId: string) => {
+export const GET = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
-    const id = req.nextUrl.pathname.split('/').pop();
-    if (!id) {
-      return NextResponse.json({ error: 'Account ID is required' }, { status: 400 });
-    }
-
+    const { id } = await context.params;
     const repository = new PrismaAccountRepository();
     const useCase = new GetAccountsUseCase(repository);
 
@@ -39,13 +35,9 @@ export const GET = withAuth(async (req: NextRequest, userId: string) => {
 });
 
 // PUT /api/accounts/[id] - Update account
-export const PUT = withAuth(async (req: NextRequest, userId: string) => {
+export const PUT = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
-    const id = req.nextUrl.pathname.split('/').pop();
-    if (!id) {
-      return NextResponse.json({ error: 'Account ID is required' }, { status: 400 });
-    }
-
+    const { id } = await context.params;
     const body = await req.json();
     const validatedData = updateAccountSchema.parse(body);
 
@@ -66,13 +58,9 @@ export const PUT = withAuth(async (req: NextRequest, userId: string) => {
 });
 
 // DELETE /api/accounts/[id] - Delete account
-export const DELETE = withAuth(async (req: NextRequest, userId: string) => {
+export const DELETE = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
-    const id = req.nextUrl.pathname.split('/').pop();
-    if (!id) {
-      return NextResponse.json({ error: 'Account ID is required' }, { status: 400 });
-    }
-
+    const { id } = await context.params;
     const repository = new PrismaAccountRepository();
     await repository.delete(id);
 

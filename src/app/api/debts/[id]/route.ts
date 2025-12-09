@@ -15,12 +15,13 @@ const updateDebtSchema = z.object({
 });
 
 // GET /api/debts/[id] - Get specific debt
-export const GET = withAuth(async (req: NextRequest, userId: string, { params }: { params: { id: string } }) => {
+export const GET = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
+    const { id } = await context.params;
     const repository = new PrismaDebtRepository();
     const useCase = new GetDebtsUseCase(repository);
 
-    const debt = await useCase.getById(params.id);
+    const debt = await useCase.getById(id);
 
     if (!debt) {
       return NextResponse.json({ error: 'Debt not found' }, { status: 404 });
@@ -38,15 +39,16 @@ export const GET = withAuth(async (req: NextRequest, userId: string, { params }:
 });
 
 // PUT /api/debts/[id] - Update debt
-export const PUT = withAuth(async (req: NextRequest, userId: string, { params }: { params: { id: string } }) => {
+export const PUT = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
+    const { id } = await context.params;
     const body = await req.json();
     const validatedData = updateDebtSchema.parse(body);
 
     const repository = new PrismaDebtRepository();
     const useCase = new UpdateDebtUseCase(repository);
 
-    const debt = await useCase.execute(params.id, validatedData);
+    const debt = await useCase.execute(id, validatedData);
 
     return NextResponse.json(debt);
   } catch (error) {
@@ -62,12 +64,13 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, { params }:
 });
 
 // DELETE /api/debts/[id] - Delete debt
-export const DELETE = withAuth(async (req: NextRequest, userId: string, { params }: { params: { id: string } }) => {
+export const DELETE = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
   try {
+    const { id } = await context.params;
     const repository = new PrismaDebtRepository();
     const useCase = new DeleteDebtUseCase(repository);
 
-    await useCase.execute(params.id, userId);
+    await useCase.execute(id, userId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

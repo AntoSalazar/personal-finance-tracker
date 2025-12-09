@@ -3,7 +3,7 @@
 import { useSession } from "@/lib/infrastructure/auth/auth-client"
 import { redirect } from "next/navigation"
 import { Button } from "@/lib/presentation/components/ui/button"
-import { Plus, CheckCircle, XCircle, Clock } from "lucide-react"
+import { Plus, CheckCircle, XCircle, Clock, Pencil, Trash2 } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -20,12 +20,15 @@ import { motion } from "framer-motion"
 import { containerVariants, itemVariants, fadeInVariants } from "@/lib/presentation/animations/variants"
 import { Badge } from "@/lib/presentation/components/ui/badge"
 import { DebtFormDialog } from "@/lib/presentation/components/features/debt-form-dialog"
+import { MarkDebtPaidDialog } from "@/lib/presentation/components/features/mark-debt-paid-dialog"
 import { useState } from "react"
 
 export default function DebtsPage() {
   const { data: session, isPending } = useSession()
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState<'all' | 'paid' | 'unpaid'>('all')
+  const [editingDebt, setEditingDebt] = useState<any>(null)
+  const [payingDebt, setPayingDebt] = useState<any>(null)
 
   // Fetch debts data
   const { data: debtsData, isLoading } = useQuery({
@@ -260,21 +263,67 @@ export default function DebtsPage() {
                     {formatCurrency(debt.amount)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {!debt.isPaid && (
+                    <div className="flex justify-end gap-2">
+                      {!debt.isPaid && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPayingDebt(debt)}
+                        >
+                          Mark Paid
+                        </Button>
+                      )}
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => toast.info('Mark as paid dialog coming soon')}
+                        onClick={() => setEditingDebt(debt)}
+                        title="Edit debt"
                       >
-                        Mark Paid
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                    )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this debt?')) {
+                            deleteMutation.mutate(debt.id)
+                          }
+                        }}
+                        title="Delete debt"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </motion.tr>
               ))}
             </TableBody>
           </Table>
         </motion.div>
+      )}
+
+      {/* Edit debt dialog */}
+      <DebtFormDialog
+        debt={editingDebt || undefined}
+        open={!!editingDebt}
+        onOpenChange={(open) => {
+          if (!open) setEditingDebt(null)
+        }}
+      >
+        <div />
+      </DebtFormDialog>
+
+      {/* Mark debt as paid dialog */}
+      {payingDebt && (
+        <MarkDebtPaidDialog
+          debt={payingDebt}
+          open={!!payingDebt}
+          onOpenChange={(open) => {
+            if (!open) setPayingDebt(null)
+          }}
+        >
+          <div />
+        </MarkDebtPaidDialog>
       )}
     </motion.div>
   )
