@@ -229,7 +229,7 @@ export class PrismaSubscriptionRepository implements ISubscriptionRepository {
     return summary;
   }
 
-  private calculateNextBillingDate(currentDate: Date, frequency: SubscriptionFrequency): Date {
+  private calculateNextBillingDate(currentDate: Date, frequency: SubscriptionFrequency | string): Date {
     const nextDate = new Date(currentDate);
 
     switch (frequency) {
@@ -250,7 +250,7 @@ export class PrismaSubscriptionRepository implements ISubscriptionRepository {
     return nextDate;
   }
 
-  private normalizeToMonthly(amount: number, frequency: SubscriptionFrequency): number {
+  private normalizeToMonthly(amount: number, frequency: SubscriptionFrequency | string): number {
     switch (frequency) {
       case 'WEEKLY':
         return amount * 4.33; // Average weeks per month

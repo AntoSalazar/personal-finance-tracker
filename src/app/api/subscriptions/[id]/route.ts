@@ -5,23 +5,24 @@ import { PrismaAccountRepository } from '@/lib/infrastructure/database/repositor
 import { UpdateSubscriptionUseCase } from '@/lib/application/use-cases/subscriptions/UpdateSubscriptionUseCase';
 import { DeleteSubscriptionUseCase } from '@/lib/application/use-cases/subscriptions/DeleteSubscriptionUseCase';
 import { GetSubscriptionsUseCase } from '@/lib/application/use-cases/subscriptions/GetSubscriptionsUseCase';
+import { SubscriptionFrequency, SubscriptionStatus } from '@/lib/domain/entities/Subscription';
 import { z, ZodError } from 'zod';
 
 const updateSubscriptionSchema = z.object({
   name: z.string().min(1).optional(),
   amount: z.number().positive().optional(),
-  frequency: z.enum(['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).optional(),
+  frequency: z.nativeEnum(SubscriptionFrequency).optional(),
   nextBillingDate: z.string().transform((val) => new Date(val)).optional(),
   accountId: z.string().optional(),
   categoryId: z.string().optional(),
-  status: z.enum(['ACTIVE', 'PAUSED', 'CANCELLED']).optional(),
+  status: z.nativeEnum(SubscriptionStatus).optional(),
   notes: z.string().optional(),
 });
 
 // GET /api/subscriptions/[id] - Get specific subscription
-export const GET = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const GET = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const repository = new PrismaSubscriptionRepository();
     const useCase = new GetSubscriptionsUseCase(repository);
 
@@ -43,9 +44,9 @@ export const GET = withAuth(async (req: NextRequest, userId: string, context: { 
 });
 
 // PUT /api/subscriptions/[id] - Update subscription
-export const PUT = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const PUT = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const body = await req.json();
     const validatedData = updateSubscriptionSchema.parse(body);
 
@@ -59,7 +60,7 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, context: { 
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }
@@ -69,9 +70,9 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, context: { 
 });
 
 // DELETE /api/subscriptions/[id] - Delete subscription
-export const DELETE = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const DELETE = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const repository = new PrismaSubscriptionRepository();
     const useCase = new DeleteSubscriptionUseCase(repository);
 

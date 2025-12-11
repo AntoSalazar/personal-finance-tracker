@@ -3,6 +3,8 @@
  * Represents an expense or income transaction
  */
 
+import { Category } from './Category';
+
 export interface Transaction {
   id: string;
   accountId: string;
@@ -12,6 +14,7 @@ export interface Transaction {
   description: string;
   reason?: string;
   categoryId: string;
+  category?: Category; // Optional: populated when needed
   tags: string[];
   date: Date;
   createdAt: Date;

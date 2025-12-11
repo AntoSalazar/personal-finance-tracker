@@ -12,9 +12,9 @@ const markAsPaidSchema = z.object({
 });
 
 // POST /api/debts/[id]/pay - Mark debt as paid (creates income transaction)
-export const POST = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const POST = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const body = await req.json();
     const validatedData = markAsPaidSchema.parse(body);
 
@@ -34,7 +34,7 @@ export const POST = withAuth(async (req: NextRequest, userId: string, context: {
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }

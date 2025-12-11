@@ -126,13 +126,13 @@ export class GetStatisticsUseCase {
     // Calculate category breakdown for expenses
     const categoryMap = new Map<string, CategoryBreakdown>();
     expenseTransactions.forEach(t => {
-      const categoryName = t.category.name;
+      const categoryName = t.category?.name || 'Uncategorized';
       if (!categoryMap.has(categoryName)) {
         categoryMap.set(categoryName, {
           name: categoryName,
           amount: 0,
           count: 0,
-          color: t.category.color || '#888888',
+          color: t.category?.color || '#888888',
         });
       }
       const category = categoryMap.get(categoryName)!;
@@ -147,13 +147,13 @@ export class GetStatisticsUseCase {
     // Calculate category breakdown for income
     const incomeCategoryMap = new Map<string, CategoryBreakdown>();
     incomeTransactions.forEach(t => {
-      const categoryName = t.category.name;
+      const categoryName = t.category?.name || 'Uncategorized';
       if (!incomeCategoryMap.has(categoryName)) {
         incomeCategoryMap.set(categoryName, {
           name: categoryName,
           amount: 0,
           count: 0,
-          color: t.category.color || '#888888',
+          color: t.category?.color || '#888888',
         });
       }
       const category = incomeCategoryMap.get(categoryName)!;
@@ -225,7 +225,7 @@ export class GetStatisticsUseCase {
       .map(t => ({
         description: t.description,
         amount: t.amount,
-        category: t.category.name,
+        category: t.category?.name || 'Uncategorized',
         date: t.date,
       }));
 

@@ -15,9 +15,9 @@ const updateDebtSchema = z.object({
 });
 
 // GET /api/debts/[id] - Get specific debt
-export const GET = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const GET = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const repository = new PrismaDebtRepository();
     const useCase = new GetDebtsUseCase(repository);
 
@@ -39,9 +39,9 @@ export const GET = withAuth(async (req: NextRequest, userId: string, context: { 
 });
 
 // PUT /api/debts/[id] - Update debt
-export const PUT = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const PUT = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const body = await req.json();
     const validatedData = updateDebtSchema.parse(body);
 
@@ -54,7 +54,7 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, context: { 
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }
@@ -64,9 +64,9 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, context: { 
 });
 
 // DELETE /api/debts/[id] - Delete debt
-export const DELETE = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const DELETE = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const repository = new PrismaDebtRepository();
     const useCase = new DeleteDebtUseCase(repository);
 

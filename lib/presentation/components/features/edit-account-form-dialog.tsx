@@ -41,7 +41,7 @@ const accountSchema = z.object({
   balance: z.string().refine((val) => !isNaN(Number(val)), {
     message: "Balance must be a valid number",
   }),
-  currency: z.string().default("USD"),
+  currency: z.string().min(1, "Currency is required"),
   description: z.string().optional(),
 })
 

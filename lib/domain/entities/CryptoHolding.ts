@@ -26,6 +26,8 @@ export interface CryptoPrice {
   percentChange24h: number;
   percentChange7d: number;
   lastUpdated: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CryptoPriceHistory {

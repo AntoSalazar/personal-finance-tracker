@@ -17,9 +17,9 @@ const updateCategorySchema = z.object({
 });
 
 // GET /api/categories/[id] - Get category by ID
-export const GET = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const GET = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const repository = new PrismaCategoryRepository();
     const useCase = new GetCategoriesUseCase(repository);
 
@@ -37,9 +37,9 @@ export const GET = withAuth(async (req: NextRequest, userId: string, context: { 
 });
 
 // PUT /api/categories/[id] - Update category
-export const PUT = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const PUT = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const body = await req.json();
     const validatedData = updateCategorySchema.parse(body);
 
@@ -52,7 +52,7 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, context: { 
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }
@@ -62,9 +62,9 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, context: { 
 });
 
 // DELETE /api/categories/[id] - Delete category
-export const DELETE = withAuth(async (req: NextRequest, userId: string, context: { params: Promise<{ id: string }> }) => {
+export const DELETE = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
-    const { id } = await context.params;
+    const { id } = await context!.params;
     const repository = new PrismaCategoryRepository();
     const useCase = new DeleteCategoryUseCase(repository);
 

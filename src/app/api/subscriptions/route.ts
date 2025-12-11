@@ -4,12 +4,13 @@ import { PrismaSubscriptionRepository } from '@/lib/infrastructure/database/repo
 import { PrismaAccountRepository } from '@/lib/infrastructure/database/repositories';
 import { CreateSubscriptionUseCase } from '@/lib/application/use-cases/subscriptions/CreateSubscriptionUseCase';
 import { GetSubscriptionsUseCase } from '@/lib/application/use-cases/subscriptions/GetSubscriptionsUseCase';
+import { SubscriptionFrequency } from '@/lib/domain/entities/Subscription';
 import { z, ZodError } from 'zod';
 
 const createSubscriptionSchema = z.object({
   name: z.string().min(1, 'Subscription name is required'),
   amount: z.number().positive('Amount must be positive'),
-  frequency: z.enum(['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']),
+  frequency: z.nativeEnum(SubscriptionFrequency),
   nextBillingDate: z.string().transform((val) => new Date(val)),
   accountId: z.string().min(1, 'Account ID is required'),
   categoryId: z.string().min(1, 'Category ID is required'),
@@ -58,7 +59,7 @@ export const POST = withAuth(async (req: NextRequest, userId: string) => {
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }
