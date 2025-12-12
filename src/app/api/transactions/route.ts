@@ -5,6 +5,12 @@ import { CreateTransactionUseCase } from '@/lib/application/use-cases/transactio
 import { GetTransactionsUseCase } from '@/lib/application/use-cases/transactions/GetTransactionsUseCase';
 import { z, ZodError } from 'zod';
 
+// Parse date in local timezone (Mexico City)
+const parseLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0); // Noon local time to avoid timezone issues
+};
+
 const createTransactionSchema = z.object({
   accountId: z.string(),
   amount: z.number().positive('Amount must be positive'),
@@ -12,7 +18,7 @@ const createTransactionSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   reason: z.string().optional(),
   categoryId: z.string(),
-  date: z.string().transform((val) => new Date(val)),
+  date: z.string().transform(parseLocalDate),
   tags: z.array(z.string()).optional(),
 });
 

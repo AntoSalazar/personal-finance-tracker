@@ -9,12 +9,18 @@ import { CreateCryptoHoldingUseCase } from '@/lib/application/use-cases/crypto/C
 import { GetCryptoPortfolioUseCase } from '@/lib/application/use-cases/crypto/GetCryptoPortfolioUseCase';
 import { z, ZodError } from 'zod';
 
+// Parse date in local timezone (Mexico City)
+const parseLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0); // Noon local time to avoid timezone issues
+};
+
 const createHoldingSchema = z.object({
   symbol: z.string().min(1, 'Symbol is required'),
   name: z.string().min(1, 'Name is required'),
   amount: z.number().positive('Amount must be positive'),
   purchasePrice: z.number().positive('Purchase price must be positive'),
-  purchaseDate: z.string().transform((val) => new Date(val)),
+  purchaseDate: z.string().transform(parseLocalDate),
   notes: z.string().optional(),
   accountId: z.string().optional(),
   categoryId: z.string().optional(),

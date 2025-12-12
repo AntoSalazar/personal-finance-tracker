@@ -92,7 +92,7 @@ export default function DashboardPage() {
   }
 
   // Calculate stats from real data
-  const totalBalance = accountsData?.totalBalance || 0
+  const accountsBalance = accountsData?.totalBalance || 0
   const accounts = accountsData?.accounts || []
   const transactions = transactionsData?.transactions || []
   const cryptoPortfolio = cryptoData?.holdings || []
@@ -110,6 +110,9 @@ export default function DashboardPage() {
   const cryptoValue = cryptoPortfolio.reduce((sum: number, holding: any) =>
     sum + (holding.amount * holding.currentPrice), 0
   )
+
+  // Total balance includes accounts + crypto
+  const totalBalance = accountsBalance + cryptoValue
 
   // Get recent transactions (last 4)
   const recentTransactions = transactions.slice(0, 4)
