@@ -116,9 +116,16 @@ export default function CryptoPage() {
   const holdings = cryptoData?.holdings || []
   const accounts = accountsData?.accounts || []
   const categories = categoriesData?.categories || []
+
+  // Calculate portfolio metrics
   const totalPortfolioValue = holdings.reduce((sum: number, holding: any) =>
     sum + (holding.amount * holding.currentPrice), 0
   )
+  const totalInvested = holdings.reduce((sum: number, holding: any) =>
+    sum + (holding.amount * holding.purchasePrice), 0
+  )
+  const totalProfitLoss = totalPortfolioValue - totalInvested
+  const totalProfitLossPercent = totalInvested > 0 ? (totalProfitLoss / totalInvested) * 100 : 0
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-MX", {
@@ -284,15 +291,24 @@ export default function CryptoPage() {
         </Dialog>
       </div>
 
-      <div className="rounded-lg border bg-card p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Total Portfolio Value</p>
-            <p className="text-3xl font-bold">{formatCurrency(totalPortfolioValue)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">{holdings.length} assets</p>
-          </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-lg border bg-card p-6">
+          <p className="text-sm font-medium text-muted-foreground">Total Portfolio Value</p>
+          <p className="text-3xl font-bold">{formatCurrency(totalPortfolioValue)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{holdings.length} assets</p>
+        </div>
+        <div className="rounded-lg border bg-card p-6">
+          <p className="text-sm font-medium text-muted-foreground">Total Invested</p>
+          <p className="text-3xl font-bold">{formatCurrency(totalInvested)}</p>
+        </div>
+        <div className="rounded-lg border bg-card p-6">
+          <p className="text-sm font-medium text-muted-foreground">Total Profit/Loss</p>
+          <p className={`text-3xl font-bold ${totalProfitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {totalProfitLoss >= 0 ? '+' : ''}{formatCurrency(totalProfitLoss)}
+          </p>
+          <p className={`text-sm font-medium ${totalProfitLossPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {totalProfitLossPercent >= 0 ? '+' : ''}{totalProfitLossPercent.toFixed(2)}%
+          </p>
         </div>
       </div>
 
@@ -310,32 +326,54 @@ export default function CryptoPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {holdings.map((holding: any) => (
-            <Card key={holding.id}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div>
-                  <CardTitle className="text-base font-medium">{holding.name}</CardTitle>
-                  <CardDescription className="text-xs">{holding.symbol}</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+          {holdings.map((holding: any) => {
+            const invested = holding.amount * holding.purchasePrice
+            const currentValue = holding.amount * holding.currentPrice
+            const profitLoss = currentValue - invested
+            const profitLossPercent = invested > 0 ? (profitLoss / invested) * 100 : 0
+
+            return (
+              <Card key={holding.id}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <div>
-                    <p className="text-2xl font-bold">
-                      {formatCurrency(holding.amount * holding.currentPrice)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {holding.amount} {holding.symbol}
-                    </p>
+                    <CardTitle className="text-base font-medium">{holding.name}</CardTitle>
+                    <CardDescription className="text-xs">{holding.symbol}</CardDescription>
                   </div>
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground">Current Price</p>
-                    <p className="text-sm font-medium">{formatCurrency(holding.currentPrice)}</p>
+                  <div className={`text-right ${profitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    <p className="text-sm font-bold">{profitLoss >= 0 ? '+' : ''}{profitLossPercent.toFixed(2)}%</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(currentValue)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {holding.amount} {holding.symbol}
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Current Price</p>
+                        <p className="text-sm font-medium">{formatCurrency(holding.currentPrice)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Invested</p>
+                        <p className="text-sm font-medium">{formatCurrency(invested)}</p>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-muted-foreground">Profit/Loss</p>
+                      <p className={`text-sm font-bold ${profitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {profitLoss >= 0 ? '+' : ''}{formatCurrency(profitLoss)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>
