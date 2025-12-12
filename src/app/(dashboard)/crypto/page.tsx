@@ -7,6 +7,7 @@ import { Button } from "@/lib/presentation/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/lib/presentation/components/ui/dialog"
 import { Input } from "@/lib/presentation/components/ui/input"
 import { Label } from "@/lib/presentation/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/lib/presentation/components/ui/select"
 import { TrendingUp, TrendingDown, Plus } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
@@ -24,6 +25,8 @@ export default function CryptoPage() {
     purchasePrice: "",
     purchaseDate: new Date().toISOString().split('T')[0],
     notes: "",
+    accountId: "",
+    categoryId: "",
   })
 
   // Fetch crypto data
@@ -36,6 +39,26 @@ export default function CryptoPage() {
     enabled: !!session,
   })
 
+  // Fetch accounts
+  const { data: accountsData } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: async () => {
+      const response = await axios.get('/api/accounts')
+      return response.data
+    },
+    enabled: !!session,
+  })
+
+  // Fetch categories
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await axios.get('/api/categories')
+      return response.data
+    },
+    enabled: !!session,
+  })
+
   // Create crypto holding mutation
   const createHolding = useMutation({
     mutationFn: async (data: any) => {
@@ -43,11 +66,15 @@ export default function CryptoPage() {
         ...data,
         amount: parseFloat(data.amount),
         purchasePrice: parseFloat(data.purchasePrice),
+        accountId: data.accountId || undefined,
+        categoryId: data.categoryId || undefined,
       })
       return response.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crypto'] })
+      queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
       setOpen(false)
       setFormData({
         symbol: "",
@@ -56,6 +83,8 @@ export default function CryptoPage() {
         purchasePrice: "",
         purchaseDate: new Date().toISOString().split('T')[0],
         notes: "",
+        accountId: "",
+        categoryId: "",
       })
       toast.success("Crypto holding added successfully!")
     },
@@ -66,6 +95,13 @@ export default function CryptoPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Validate that category is selected if account is selected
+    if (formData.accountId && !formData.categoryId) {
+      toast.error("Please select a category when purchasing from an account")
+      return
+    }
+
     createHolding.mutate(formData)
   }
 
@@ -78,14 +114,16 @@ export default function CryptoPage() {
   }
 
   const holdings = cryptoData?.holdings || []
+  const accounts = accountsData?.accounts || []
+  const categories = categoriesData?.categories || []
   const totalPortfolioValue = holdings.reduce((sum: number, holding: any) =>
     sum + (holding.amount * holding.currentPrice), 0
   )
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("es-MX", {
       style: "currency",
-      currency: "USD",
+      currency: "MXN",
     }).format(amount)
   }
 
@@ -103,7 +141,7 @@ export default function CryptoPage() {
               Add Crypto Holding
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add Crypto Holding</DialogTitle>
               <DialogDescription>
@@ -147,7 +185,7 @@ export default function CryptoPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="purchasePrice">Purchase Price (USD)</Label>
+                  <Label htmlFor="purchasePrice">Purchase Price (MXN)</Label>
                   <Input
                     id="purchasePrice"
                     type="number"
@@ -159,16 +197,71 @@ export default function CryptoPage() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="purchaseDate">Purchase Date</Label>
-                <Input
-                  id="purchaseDate"
-                  type="date"
-                  value={formData.purchaseDate}
-                  onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="purchaseDate">Purchase Date</Label>
+                  <Input
+                    id="purchaseDate"
+                    type="date"
+                    value={formData.purchaseDate}
+                    onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accountId">Purchase From Account (Optional)</Label>
+                  <Select
+                    value={formData.accountId || undefined}
+                    onValueChange={(value) => setFormData({ ...formData, accountId: value, categoryId: "" })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="None - Track manually" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accounts.map((account: any) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name} (${account.balance.toFixed(2)})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              {formData.accountId && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="categoryId">Category *</Label>
+                    <Select
+                      value={formData.categoryId || undefined}
+                      onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.filter((cat: any) => cat.type === 'EXPENSE').map((category: any) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Total Cost</Label>
+                    <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted">
+                      <span className="text-sm font-medium">
+                        {formatCurrency(parseFloat(formData.amount || "0") * parseFloat(formData.purchasePrice || "0"))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {formData.accountId
+                  ? "💰 The purchase cost will be automatically deducted from the selected account"
+                  : "📝 No account selected - crypto will be tracked manually without affecting balances"}
+              </p>
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes (Optional)</Label>
                 <Input

@@ -18,7 +18,7 @@ export interface CoinMarketCapResponse {
       name: string;
       symbol: string;
       quote: {
-        USD: {
+        [currency: string]: {
           price: number;
           volume_24h: number;
           volume_change_24h: number;
@@ -67,7 +67,7 @@ export class CoinMarketCapClient {
   /**
    * Fetch current prices for multiple crypto symbols
    */
-  async fetchCryptoPrices(symbols: string[]): Promise<CryptoQuote[]> {
+  async fetchCryptoPrices(symbols: string[], currency: string = 'MXN'): Promise<CryptoQuote[]> {
     if (!this.apiKey) {
       throw new Error('CoinMarketCap API key is not configured');
     }
@@ -82,7 +82,7 @@ export class CoinMarketCapClient {
         {
           params: {
             symbol: symbols.join(','),
-            convert: 'USD',
+            convert: currency,
           },
         }
       );
@@ -91,17 +91,17 @@ export class CoinMarketCapClient {
 
       for (const symbol of symbols) {
         const data = response.data.data[symbol];
-        if (data && data.quote && data.quote.USD) {
-          const usdQuote = data.quote.USD;
+        if (data && data.quote && data.quote[currency]) {
+          const currencyQuote = data.quote[currency];
           quotes.push({
             symbol: data.symbol,
             name: data.name,
-            price: usdQuote.price,
-            marketCap: usdQuote.market_cap,
-            volume24h: usdQuote.volume_24h,
-            percentChange24h: usdQuote.percent_change_24h,
-            percentChange7d: usdQuote.percent_change_7d,
-            lastUpdated: new Date(usdQuote.last_updated),
+            price: currencyQuote.price,
+            marketCap: currencyQuote.market_cap,
+            volume24h: currencyQuote.volume_24h,
+            percentChange24h: currencyQuote.percent_change_24h,
+            percentChange7d: currencyQuote.percent_change_7d,
+            lastUpdated: new Date(currencyQuote.last_updated),
           });
         }
       }

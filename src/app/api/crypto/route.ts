@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, createErrorResponse } from '@/lib/infrastructure/api/auth-middleware';
-import { PrismaCryptoRepository } from '@/lib/infrastructure/database/repositories';
+import {
+  PrismaCryptoRepository,
+  PrismaAccountRepository,
+  PrismaTransactionRepository
+} from '@/lib/infrastructure/database/repositories';
 import { CreateCryptoHoldingUseCase } from '@/lib/application/use-cases/crypto/CreateCryptoHoldingUseCase';
 import { GetCryptoPortfolioUseCase } from '@/lib/application/use-cases/crypto/GetCryptoPortfolioUseCase';
 import { z, ZodError } from 'zod';
@@ -12,6 +16,8 @@ const createHoldingSchema = z.object({
   purchasePrice: z.number().positive('Purchase price must be positive'),
   purchaseDate: z.string().transform((val) => new Date(val)),
   notes: z.string().optional(),
+  accountId: z.string().optional(),
+  categoryId: z.string().optional(),
 });
 
 // GET /api/crypto - Get crypto portfolio
@@ -35,10 +41,18 @@ export const POST = withAuth(async (req: NextRequest, userId: string) => {
     const body = await req.json();
     const validatedData = createHoldingSchema.parse(body);
 
-    const repository = new PrismaCryptoRepository();
-    const useCase = new CreateCryptoHoldingUseCase(repository);
+    const cryptoRepository = new PrismaCryptoRepository();
+    const accountRepository = new PrismaAccountRepository();
+    const transactionRepository = new PrismaTransactionRepository();
 
-    const holding = await useCase.execute(validatedData as any, userId);
+    const useCase = new CreateCryptoHoldingUseCase(
+      cryptoRepository,
+      accountRepository,
+      transactionRepository
+    );
+
+    const { categoryId, ...holdingData } = validatedData as any;
+    const holding = await useCase.execute(holdingData, userId, categoryId);
 
     return NextResponse.json(holding, { status: 201 });
   } catch (error) {

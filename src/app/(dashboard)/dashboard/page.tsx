@@ -114,6 +114,14 @@ export default function DashboardPage() {
   // Get recent transactions (last 4)
   const recentTransactions = transactions.slice(0, 4)
 
+  // Format currency in MXN
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    }).format(amount)
+  }
+
   return (
     <motion.div
       initial="initial"
@@ -173,7 +181,7 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
           <StatsCard
             title="Total Balance"
-            value={`$${totalBalance.toFixed(2)}`}
+            value={formatCurrency(totalBalance)}
             icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
             isLoading={isLoading}
           />
@@ -181,7 +189,7 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
           <StatsCard
             title="Total Income"
-            value={`$${totalIncome.toFixed(2)}`}
+            value={formatCurrency(totalIncome)}
             icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
             isLoading={isLoading}
           />
@@ -189,7 +197,7 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
           <StatsCard
             title="Total Expenses"
-            value={`$${totalExpenses.toFixed(2)}`}
+            value={formatCurrency(totalExpenses)}
             icon={<TrendingDown className="h-4 w-4 text-muted-foreground" />}
             isLoading={isLoading}
           />
@@ -197,7 +205,7 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
           <StatsCard
             title="Crypto Value"
-            value={`$${cryptoValue.toFixed(2)}`}
+            value={formatCurrency(cryptoValue)}
             icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
             isLoading={isLoading}
           />
@@ -246,7 +254,7 @@ export default function DashboardPage() {
                         transaction.type === 'EXPENSE' ? 'text-red-500' : 'text-blue-500'
                       }`}>
                         {transaction.type === 'INCOME' ? '+' : transaction.type === 'EXPENSE' ? '-' : ''}
-                        ${transaction.amount.toFixed(2)}
+                        {formatCurrency(transaction.amount)}
                       </span>
                     </motion.div>
                   ))}

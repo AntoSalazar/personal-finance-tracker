@@ -13,6 +13,8 @@ export interface CryptoHolding {
   currentPrice: number;
   lastPriceUpdate: Date;
   notes?: string;
+  accountId?: string;
+  transactionId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,6 +47,7 @@ export interface CreateCryptoHoldingDTO {
   purchasePrice: number;
   purchaseDate: Date;
   notes?: string;
+  accountId?: string;
 }
 
 export interface UpdateCryptoHoldingDTO {

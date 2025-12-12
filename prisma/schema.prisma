@@ -187,11 +187,14 @@ model CryptoHolding {
   currentPrice    Float    @default(0)
   lastPriceUpdate DateTime @default(now())
   notes           String?
+  accountId       String? // Source account for purchase (e.g., Binance)
+  transactionId   String? // Link to the purchase transaction
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([symbol])
   @@index([userId])
+  @@index([accountId])
   @@map("crypto_holdings")
 }
 
