@@ -177,25 +177,38 @@ model TransactionTagLink {
 }
 
 model CryptoHolding {
-  id              String   @id @default(cuid())
-  userId          String // Reference to BetterAuth user
-  symbol          String
-  name            String
-  amount          Float
-  purchasePrice   Float
-  purchaseDate    DateTime
-  currentPrice    Float    @default(0)
-  lastPriceUpdate DateTime @default(now())
-  notes           String?
-  accountId       String? // Source account for purchase (e.g., Binance)
-  transactionId   String? // Link to the purchase transaction
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  String              @id @default(cuid())
+  userId              String // Reference to BetterAuth user
+  symbol              String
+  name                String
+  amount              Float
+  purchasePrice       Float
+  purchaseDate        DateTime
+  purchaseFee         Float               @default(0) // Fee paid when buying
+  currentPrice        Float               @default(0)
+  lastPriceUpdate     DateTime            @default(now())
+  notes               String?
+  accountId           String? // Source account for purchase (e.g., Binance)
+  transactionId       String? // Link to the purchase transaction
+  status              CryptoHoldingStatus @default(ACTIVE)
+  salePrice           Float? // Price per unit when sold
+  saleDate            DateTime? // When sold
+  saleFee             Float? // Fee paid when selling
+  saleAccountId       String? // Destination account for sale proceeds
+  saleTransactionId   String? // Link to the sale transaction
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
   @@index([symbol])
   @@index([userId])
   @@index([accountId])
+  @@index([status])
   @@map("crypto_holdings")
+}
+
+enum CryptoHoldingStatus {
+  ACTIVE // Currently holding
+  SOLD // Fully sold
 }
 
 model CryptoPrice {

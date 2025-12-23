@@ -106,10 +106,12 @@ export default function DashboardPage() {
     .filter((t: any) => t.type === 'EXPENSE')
     .reduce((sum: number, t: any) => sum + t.amount, 0)
 
-  // Calculate crypto value
-  const cryptoValue = cryptoPortfolio.reduce((sum: number, holding: any) =>
-    sum + (holding.amount * holding.currentPrice), 0
-  )
+  // Calculate crypto value (only active holdings, exclude sold)
+  const cryptoValue = cryptoPortfolio
+    .filter((holding: any) => holding.status !== 'SOLD')
+    .reduce((sum: number, holding: any) =>
+      sum + (holding.amount * holding.currentPrice), 0
+    )
 
   // Total balance includes accounts + crypto
   const totalBalance = accountsBalance + cryptoValue

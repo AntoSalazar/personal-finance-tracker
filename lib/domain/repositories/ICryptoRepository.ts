@@ -4,6 +4,7 @@ import {
   CryptoPriceHistory,
   CreateCryptoHoldingDTO,
   UpdateCryptoHoldingDTO,
+  SellCryptoHoldingDTO,
 } from '../entities/CryptoHolding';
 
 export interface ICryptoRepository {
@@ -15,6 +16,7 @@ export interface ICryptoRepository {
   updateHolding(id: string, data: UpdateCryptoHoldingDTO): Promise<CryptoHolding>;
   deleteHolding(id: string): Promise<void>;
   updateHoldingPrice(id: string, price: number): Promise<void>;
+  sellHolding(id: string, data: SellCryptoHoldingDTO): Promise<CryptoHolding>;
 
   // Prices
   findCurrentPrice(symbol: string): Promise<CryptoPrice | null>;

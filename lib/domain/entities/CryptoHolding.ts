@@ -3,6 +3,11 @@
  * Represents a cryptocurrency investment holding
  */
 
+export enum CryptoHoldingStatus {
+  ACTIVE = 'ACTIVE',
+  SOLD = 'SOLD',
+}
+
 export interface CryptoHolding {
   id: string;
   symbol: string;
@@ -10,11 +15,18 @@ export interface CryptoHolding {
   amount: number;
   purchasePrice: number;
   purchaseDate: Date;
+  purchaseFee: number;
   currentPrice: number;
   lastPriceUpdate: Date;
   notes?: string;
   accountId?: string;
   transactionId?: string;
+  status: CryptoHoldingStatus;
+  salePrice?: number;
+  saleDate?: Date;
+  saleFee?: number;
+  saleAccountId?: string;
+  saleTransactionId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,8 +58,18 @@ export interface CreateCryptoHoldingDTO {
   amount: number;
   purchasePrice: number;
   purchaseDate: Date;
+  purchaseFee?: number;
   notes?: string;
   accountId?: string;
+  categoryId?: string;
+}
+
+export interface SellCryptoHoldingDTO {
+  salePrice: number;
+  saleDate: Date;
+  saleFee?: number;
+  saleAccountId: string;
+  categoryId?: string;
 }
 
 export interface UpdateCryptoHoldingDTO {

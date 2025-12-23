@@ -5,6 +5,7 @@ import {
   CryptoPriceHistory,
   CreateCryptoHoldingDTO,
   UpdateCryptoHoldingDTO,
+  SellCryptoHoldingDTO,
 } from '@/lib/domain/entities/CryptoHolding';
 import prisma from '../prisma-client';
 
@@ -64,6 +65,20 @@ export class PrismaCryptoRepository implements ICryptoRepository {
         lastPriceUpdate: new Date(),
       },
     });
+  }
+
+  async sellHolding(id: string, data: SellCryptoHoldingDTO): Promise<CryptoHolding> {
+    const holding = await prisma.cryptoHolding.update({
+      where: { id },
+      data: {
+        status: 'SOLD',
+        salePrice: data.salePrice,
+        saleDate: data.saleDate,
+        saleFee: data.saleFee || 0,
+        saleAccountId: data.saleAccountId,
+      },
+    });
+    return holding as CryptoHolding;
   }
 
   // Prices

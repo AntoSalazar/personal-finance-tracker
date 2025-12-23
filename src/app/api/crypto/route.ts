@@ -21,6 +21,7 @@ const createHoldingSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
   purchasePrice: z.number().positive('Purchase price must be positive'),
   purchaseDate: z.string().transform(parseLocalDate),
+  purchaseFee: z.number().nonnegative('Fee cannot be negative').optional(),
   notes: z.string().optional(),
   accountId: z.string().optional(),
   categoryId: z.string().optional(),

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/lib/presentation/components/ui/input"
 import { Label } from "@/lib/presentation/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/lib/presentation/components/ui/select"
-import { TrendingUp, TrendingDown, Plus } from "lucide-react"
+import { TrendingUp, TrendingDown, Plus, DollarSign } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import { useState } from "react"
@@ -18,14 +18,24 @@ export default function CryptoPage() {
   const { data: session, isPending } = useSession()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
+  const [sellDialogOpen, setSellDialogOpen] = useState(false)
+  const [selectedHolding, setSelectedHolding] = useState<any>(null)
   const [formData, setFormData] = useState({
     symbol: "",
     name: "",
     amount: "",
     purchasePrice: "",
     purchaseDate: new Date().toISOString().split('T')[0],
+    purchaseFee: "",
     notes: "",
     accountId: "",
+    categoryId: "",
+  })
+  const [sellFormData, setSellFormData] = useState({
+    salePrice: "",
+    saleDate: new Date().toISOString().split('T')[0],
+    saleFee: "",
+    saleAccountId: "",
     categoryId: "",
   })
 
@@ -66,6 +76,7 @@ export default function CryptoPage() {
         ...data,
         amount: parseFloat(data.amount),
         purchasePrice: parseFloat(data.purchasePrice),
+        purchaseFee: data.purchaseFee ? parseFloat(data.purchaseFee) : 0,
         accountId: data.accountId || undefined,
         categoryId: data.categoryId || undefined,
       })
@@ -82,6 +93,7 @@ export default function CryptoPage() {
         amount: "",
         purchasePrice: "",
         purchaseDate: new Date().toISOString().split('T')[0],
+        purchaseFee: "",
         notes: "",
         accountId: "",
         categoryId: "",
@@ -90,6 +102,38 @@ export default function CryptoPage() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || "Failed to add crypto holding")
+    },
+  })
+
+  // Sell crypto holding mutation
+  const sellHolding = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await axios.post(`/api/crypto/${selectedHolding?.id}/sell`, {
+        salePrice: parseFloat(data.salePrice),
+        saleDate: new Date(data.saleDate).toISOString(),
+        saleFee: data.saleFee ? parseFloat(data.saleFee) : 0,
+        saleAccountId: data.saleAccountId,
+        categoryId: data.categoryId,
+      })
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crypto'] })
+      queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      setSellDialogOpen(false)
+      setSelectedHolding(null)
+      setSellFormData({
+        salePrice: "",
+        saleDate: new Date().toISOString().split('T')[0],
+        saleFee: "",
+        saleAccountId: "",
+        categoryId: "",
+      })
+      toast.success("Crypto sold successfully!")
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || "Failed to sell crypto")
     },
   })
 
@@ -105,6 +149,29 @@ export default function CryptoPage() {
     createHolding.mutate(formData)
   }
 
+  const handleSellSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!sellFormData.categoryId) {
+      toast.error("Please select a category for the sale")
+      return
+    }
+
+    sellHolding.mutate(sellFormData)
+  }
+
+  const openSellDialog = (holding: any) => {
+    setSelectedHolding(holding)
+    setSellFormData({
+      salePrice: holding.currentPrice.toString(),
+      saleDate: new Date().toISOString().split('T')[0],
+      saleFee: "",
+      saleAccountId: "",
+      categoryId: "",
+    })
+    setSellDialogOpen(true)
+  }
+
   if (isPending || isLoading) {
     return <div>Loading...</div>
   }
@@ -117,11 +184,14 @@ export default function CryptoPage() {
   const accounts = accountsData?.accounts || []
   const categories = categoriesData?.categories || []
 
+  // Filter active holdings only (exclude sold)
+  const activeHoldings = holdings.filter((h: any) => h.status !== 'SOLD')
+
   // Calculate portfolio metrics
-  const totalPortfolioValue = holdings.reduce((sum: number, holding: any) =>
+  const totalPortfolioValue = activeHoldings.reduce((sum: number, holding: any) =>
     sum + (holding.amount * holding.currentPrice), 0
   )
-  const totalInvested = holdings.reduce((sum: number, holding: any) =>
+  const totalInvested = activeHoldings.reduce((sum: number, holding: any) =>
     sum + (holding.amount * holding.purchasePrice), 0
   )
   const totalProfitLoss = totalPortfolioValue - totalInvested
@@ -206,6 +276,30 @@ export default function CryptoPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="purchaseFee">Purchase Fee (Optional)</Label>
+                  <Input
+                    id="purchaseFee"
+                    type="number"
+                    step="any"
+                    placeholder="0"
+                    value={formData.purchaseFee}
+                    onChange={(e) => setFormData({ ...formData, purchaseFee: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Total Cost Including Fee</Label>
+                  <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted">
+                    <span className="text-sm font-medium">
+                      {formatCurrency(
+                        (parseFloat(formData.amount || "0") * parseFloat(formData.purchasePrice || "0")) +
+                        parseFloat(formData.purchaseFee || "0")
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="purchaseDate">Purchase Date</Label>
                   <Input
                     id="purchaseDate"
@@ -235,33 +329,23 @@ export default function CryptoPage() {
                 </div>
               </div>
               {formData.accountId && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="categoryId">Category *</Label>
-                    <Select
-                      value={formData.categoryId || undefined}
-                      onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.filter((cat: any) => cat.type === 'EXPENSE').map((category: any) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Total Cost</Label>
-                    <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted">
-                      <span className="text-sm font-medium">
-                        {formatCurrency(parseFloat(formData.amount || "0") * parseFloat(formData.purchasePrice || "0"))}
-                      </span>
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="categoryId">Category *</Label>
+                  <Select
+                    value={formData.categoryId || undefined}
+                    onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.filter((cat: any) => cat.type === 'EXPENSE').map((category: any) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
@@ -291,11 +375,148 @@ export default function CryptoPage() {
         </Dialog>
       </div>
 
+      {/* Sell Crypto Dialog */}
+      <Dialog open={sellDialogOpen} onOpenChange={setSellDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Sell {selectedHolding?.name}</DialogTitle>
+            <DialogDescription>
+              Sell your {selectedHolding?.symbol} and transfer proceeds to an account
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSellSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Crypto Amount</Label>
+                <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted">
+                  <span className="text-sm font-medium">
+                    {selectedHolding?.amount} {selectedHolding?.symbol}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Current Price</Label>
+                <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted">
+                  <span className="text-sm font-medium">
+                    {formatCurrency(selectedHolding?.currentPrice || 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="salePrice">Sale Price per Unit (MXN) *</Label>
+                <Input
+                  id="salePrice"
+                  type="number"
+                  step="any"
+                  placeholder="50000"
+                  value={sellFormData.salePrice}
+                  onChange={(e) => setSellFormData({ ...sellFormData, salePrice: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="saleFee">Sale Fee (Optional)</Label>
+                <Input
+                  id="saleFee"
+                  type="number"
+                  step="any"
+                  placeholder="0"
+                  value={sellFormData.saleFee}
+                  onChange={(e) => setSellFormData({ ...sellFormData, saleFee: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Gross Proceeds</Label>
+                <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted">
+                  <span className="text-sm font-medium">
+                    {formatCurrency((selectedHolding?.amount || 0) * parseFloat(sellFormData.salePrice || "0"))}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Net Proceeds (After Fee)</Label>
+                <div className="flex items-center h-10 px-3 rounded-md border border-input bg-muted">
+                  <span className="text-sm font-medium text-green-600">
+                    {formatCurrency(
+                      ((selectedHolding?.amount || 0) * parseFloat(sellFormData.salePrice || "0")) -
+                      parseFloat(sellFormData.saleFee || "0")
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="saleDate">Sale Date *</Label>
+                <Input
+                  id="saleDate"
+                  type="date"
+                  value={sellFormData.saleDate}
+                  onChange={(e) => setSellFormData({ ...sellFormData, saleDate: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="saleAccountId">Deposit To Account *</Label>
+                <Select
+                  value={sellFormData.saleAccountId || undefined}
+                  onValueChange={(value) => setSellFormData({ ...sellFormData, saleAccountId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.map((account: any) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name} ({formatCurrency(account.balance)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sellCategoryId">Category *</Label>
+              <Select
+                value={sellFormData.categoryId || undefined}
+                onValueChange={(value) => setSellFormData({ ...sellFormData, categoryId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.filter((cat: any) => cat.type === 'INCOME').map((category: any) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              💰 The net proceeds will be added to the selected account as income
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setSellDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={sellHolding.isPending}>
+                {sellHolding.isPending ? "Selling..." : "Sell Crypto"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border bg-card p-6">
           <p className="text-sm font-medium text-muted-foreground">Total Portfolio Value</p>
           <p className="text-3xl font-bold">{formatCurrency(totalPortfolioValue)}</p>
-          <p className="text-xs text-muted-foreground mt-1">{holdings.length} assets</p>
+          <p className="text-xs text-muted-foreground mt-1">{activeHoldings.length} active assets</p>
         </div>
         <div className="rounded-lg border bg-card p-6">
           <p className="text-sm font-medium text-muted-foreground">Total Invested</p>
@@ -312,9 +533,9 @@ export default function CryptoPage() {
         </div>
       </div>
 
-      {holdings.length === 0 ? (
+      {activeHoldings.length === 0 ? (
         <div className="text-center py-12 border border-dashed rounded-lg">
-          <p className="text-muted-foreground mb-4">No crypto holdings yet</p>
+          <p className="text-muted-foreground mb-4">No active crypto holdings</p>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -326,7 +547,7 @@ export default function CryptoPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {holdings.map((holding: any) => {
+          {activeHoldings.map((holding: any) => {
             const invested = holding.amount * holding.purchasePrice
             const currentValue = holding.amount * holding.currentPrice
             const profitLoss = currentValue - invested
@@ -369,6 +590,15 @@ export default function CryptoPage() {
                         {profitLoss >= 0 ? '+' : ''}{formatCurrency(profitLoss)}
                       </p>
                     </div>
+                    <Button
+                      className="w-full mt-2"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openSellDialog(holding)}
+                    >
+                      <DollarSign className="mr-2 h-4 w-4" />
+                      Sell Crypto
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

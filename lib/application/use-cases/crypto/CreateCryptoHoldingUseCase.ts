@@ -49,8 +49,9 @@ export class CreateCryptoHoldingUseCase {
         throw new Error('Account not found');
       }
 
-      // Calculate total purchase cost
-      const totalCost = data.amount * data.purchasePrice;
+      // Calculate total purchase cost including fees
+      const purchaseFee = data.purchaseFee || 0;
+      const totalCost = (data.amount * data.purchasePrice) + purchaseFee;
 
       // Check if account has sufficient balance (except credit cards)
       if (account.type !== AccountType.CREDIT_CARD && account.balance < totalCost) {
@@ -64,7 +65,7 @@ export class CreateCryptoHoldingUseCase {
         accountId: data.accountId,
         amount: totalCost,
         type: TransactionType.EXPENSE,
-        description: `Bought ${data.amount} ${data.symbol} (${data.name})`,
+        description: `Bought ${data.amount} ${data.symbol} (${data.name})${purchaseFee > 0 ? ` - Fee: $${purchaseFee.toFixed(2)}` : ''}`,
         categoryId: categoryId,
         date: data.purchaseDate,
       });
@@ -81,6 +82,7 @@ export class CreateCryptoHoldingUseCase {
         amount: data.amount,
         purchasePrice: data.purchasePrice,
         purchaseDate: data.purchaseDate,
+        purchaseFee: data.purchaseFee || 0,
         notes: data.notes,
         accountId: data.accountId,
         transactionId: transactionId,

@@ -97,7 +97,7 @@ export function TransactionFormDialog({ children }: TransactionFormDialogProps) 
       const response = await axios.post('/api/transactions', {
         ...data,
         amount: parseFloat(data.amount),
-        date: new Date(data.date).toISOString(),
+        date: data.date, // Send date string directly in YYYY-MM-DD format
       })
       return response.data
     },

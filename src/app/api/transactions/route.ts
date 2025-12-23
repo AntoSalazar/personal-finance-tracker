@@ -7,8 +7,31 @@ import { z, ZodError } from 'zod';
 
 // Parse date in local timezone (Mexico City)
 const parseLocalDate = (dateString: string): Date => {
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day, 12, 0, 0); // Noon local time to avoid timezone issues
+  if (!dateString || typeof dateString !== 'string') {
+    throw new Error('Date is required and must be a string');
+  }
+
+  // Support both YYYY-MM-DD and ISO 8601 formats
+  const isoMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!isoMatch) {
+    throw new Error('Date must be in YYYY-MM-DD format');
+  }
+
+  const [, year, month, day] = isoMatch.map(Number);
+
+  // Validate the date components
+  if (!year || !month || !day || month < 1 || month > 12 || day < 1 || day > 31) {
+    throw new Error('Invalid date values');
+  }
+
+  const date = new Date(year, month - 1, day, 12, 0, 0); // Noon local time to avoid timezone issues
+
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
+    throw new Error('Invalid date');
+  }
+
+  return date;
 };
 
 const createTransactionSchema = z.object({
