@@ -27,6 +27,11 @@ export const GET = withAuth(async (req: NextRequest, userId: string, context?: {
       return NextResponse.json({ error: 'Account not found' }, { status: 404 });
     }
 
+    // SECURITY: Verify account belongs to user
+    if (account.userId !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     return NextResponse.json(account);
   } catch (error) {
     console.error('GET /api/accounts/[id] error:', error);
@@ -42,6 +47,16 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, context?: {
     const validatedData = updateAccountSchema.parse(body);
 
     const repository = new PrismaAccountRepository();
+
+    // SECURITY: Verify account belongs to user before updating
+    const existingAccount = await repository.findById(id);
+    if (!existingAccount) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    }
+    if (existingAccount.userId !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     const account = await repository.update(id, validatedData);
 
     return NextResponse.json(account);
@@ -62,6 +77,16 @@ export const DELETE = withAuth(async (req: NextRequest, userId: string, context?
   try {
     const { id } = await context!.params;
     const repository = new PrismaAccountRepository();
+
+    // SECURITY: Verify account belongs to user before deleting
+    const existingAccount = await repository.findById(id);
+    if (!existingAccount) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    }
+    if (existingAccount.userId !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     await repository.delete(id);
 
     return NextResponse.json({ message: 'Account deleted successfully' });

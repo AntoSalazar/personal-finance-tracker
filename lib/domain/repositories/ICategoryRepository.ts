@@ -1,11 +1,11 @@
 import { Category, CreateCategoryDTO, UpdateCategoryDTO } from '../entities/Category';
 
 export interface ICategoryRepository {
-  findAll(): Promise<Category[]>;
-  findById(id: string): Promise<Category | null>;
-  findByType(type: string): Promise<Category[]>;
-  findByParentId(parentId: string): Promise<Category[]>;
-  create(data: CreateCategoryDTO): Promise<Category>;
-  update(id: string, data: UpdateCategoryDTO): Promise<Category>;
-  delete(id: string): Promise<void>;
+  findAll(userId: string): Promise<Category[]>;
+  findById(id: string, userId: string): Promise<Category | null>;
+  findByType(type: string, userId: string): Promise<Category[]>;
+  findByParentId(parentId: string, userId: string): Promise<Category[]>;
+  create(data: CreateCategoryDTO, userId: string): Promise<Category>;
+  update(id: string, data: UpdateCategoryDTO, userId: string): Promise<Category>;
+  delete(id: string, userId: string): Promise<void>;
 }

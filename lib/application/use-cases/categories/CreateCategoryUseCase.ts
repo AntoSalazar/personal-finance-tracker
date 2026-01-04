@@ -4,7 +4,7 @@ import { Category, CreateCategoryDTO } from '@/lib/domain/entities/Category';
 export class CreateCategoryUseCase {
   constructor(private categoryRepository: ICategoryRepository) {}
 
-  async execute(data: CreateCategoryDTO): Promise<Category> {
+  async execute(data: CreateCategoryDTO, userId: string): Promise<Category> {
     // Validate input
     if (!data.name || data.name.trim().length === 0) {
       throw new Error('Category name is required');
@@ -16,12 +16,12 @@ export class CreateCategoryUseCase {
 
     // Validate parent category exists if parentId is provided
     if (data.parentId) {
-      const parent = await this.categoryRepository.findById(data.parentId);
+      const parent = await this.categoryRepository.findById(data.parentId, userId);
       if (!parent) {
         throw new Error('Parent category not found');
       }
     }
 
-    return await this.categoryRepository.create(data);
+    return await this.categoryRepository.create(data, userId);
   }
 }

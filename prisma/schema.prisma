@@ -23,6 +23,8 @@ model User {
   accounts      Account[]
   debts         Debt[]
   subscriptions Subscription[]
+  categories    Category[]
+  cryptoHoldings CryptoHolding[]
 
   @@unique([email])
   @@map("user")
@@ -133,6 +135,7 @@ enum TransactionType {
 
 model Category {
   id            String         @id @default(cuid())
+  userId        String // Reference to BetterAuth user
   name          String
   description   String?
   color         String?
@@ -141,11 +144,13 @@ model Category {
   parentId      String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   parent        Category?      @relation("CategoryTree", fields: [parentId], references: [id])
   children      Category[]     @relation("CategoryTree")
   transactions  Transaction[]
   subscriptions Subscription[]
 
+  @@index([userId])
   @@map("categories")
 }
 
@@ -198,6 +203,7 @@ model CryptoHolding {
   saleTransactionId   String? // Link to the sale transaction
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([symbol])
   @@index([userId])

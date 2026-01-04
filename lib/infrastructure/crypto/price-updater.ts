@@ -1,25 +1,26 @@
 import { coinMarketCapClient } from './coinmarketcap-client';
-import { PrismaCryptoRepository } from '../database/repositories/PrismaCryptoRepository';
 import prisma from '../database/prisma-client';
 
 export class CryptoPriceUpdater {
-  private cryptoRepository: PrismaCryptoRepository;
   private updateInterval: number;
   private intervalId: NodeJS.Timeout | null = null;
 
   constructor(updateIntervalMinutes: number = 5) {
-    this.cryptoRepository = new PrismaCryptoRepository();
     this.updateInterval = updateIntervalMinutes * 60 * 1000; // Convert to milliseconds
   }
 
   /**
-   * Update prices for all holdings
+   * Update prices for all holdings (automated background service)
+   * This runs via cron job and updates prices for all users
    */
   async updateAllPrices(): Promise<void> {
     try {
-      // Get all unique symbols from holdings
-      const holdings = await this.cryptoRepository.findAllHoldings();
-      const uniqueSymbols = [...new Set(holdings.map((h) => h.symbol))];
+      // Get all unique symbols from all users' holdings
+      const holdings = await prisma.cryptoHolding.findMany({
+        select: { symbol: true },
+        distinct: ['symbol'],
+      });
+      const uniqueSymbols = holdings.map((h) => h.symbol);
 
       if (uniqueSymbols.length === 0) {
         console.log('No crypto holdings to update');
@@ -33,7 +34,7 @@ export class CryptoPriceUpdater {
 
       // Update prices in database
       for (const quote of quotes) {
-        // Update CryptoPrice table
+        // Update CryptoPrice table (global price data)
         await prisma.cryptoPrice.upsert({
           where: { symbol: quote.symbol },
           update: {
@@ -56,13 +57,22 @@ export class CryptoPriceUpdater {
         });
 
         // Save to price history
-        await this.cryptoRepository.savePriceHistory(quote.symbol, quote.price);
+        await prisma.cryptoPriceHistory.create({
+          data: {
+            symbol: quote.symbol,
+            price: quote.price,
+            timestamp: new Date(),
+          },
+        });
 
-        // Update all holdings with this symbol
-        const symbolHoldings = await this.cryptoRepository.findHoldingBySymbol(quote.symbol);
-        for (const holding of symbolHoldings) {
-          await this.cryptoRepository.updateHoldingPrice(holding.id, quote.price);
-        }
+        // Update current price for all users' holdings with this symbol
+        await prisma.cryptoHolding.updateMany({
+          where: { symbol: quote.symbol },
+          data: {
+            currentPrice: quote.price,
+            lastPriceUpdate: new Date(),
+          },
+        });
       }
 
       console.log(`Successfully updated prices for ${quotes.length} cryptocurrencies`);

@@ -4,11 +4,11 @@ import { Category, UpdateCategoryDTO } from '@/lib/domain/entities/Category';
 export class UpdateCategoryUseCase {
   constructor(private categoryRepository: ICategoryRepository) {}
 
-  async execute(id: string, data: UpdateCategoryDTO): Promise<Category> {
-    // Validate category exists
-    const existingCategory = await this.categoryRepository.findById(id);
+  async execute(id: string, data: UpdateCategoryDTO, userId: string): Promise<Category> {
+    // Validate category exists and belongs to user
+    const existingCategory = await this.categoryRepository.findById(id, userId);
     if (!existingCategory) {
-      throw new Error('Category not found');
+      throw new Error('Category not found or unauthorized');
     }
 
     // Validate parent category exists if parentId is provided
@@ -18,7 +18,7 @@ export class UpdateCategoryUseCase {
         throw new Error('Category cannot be its own parent');
       }
 
-      const parent = await this.categoryRepository.findById(data.parentId);
+      const parent = await this.categoryRepository.findById(data.parentId, userId);
       if (!parent) {
         throw new Error('Parent category not found');
       }
@@ -29,6 +29,6 @@ export class UpdateCategoryUseCase {
       }
     }
 
-    return await this.categoryRepository.update(id, data);
+    return await this.categoryRepository.update(id, data, userId);
   }
 }

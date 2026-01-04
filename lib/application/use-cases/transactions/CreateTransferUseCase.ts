@@ -17,7 +17,7 @@ export class CreateTransferUseCase {
     private accountRepository: IAccountRepository
   ) {}
 
-  async execute(data: CreateTransferDTO): Promise<Transaction> {
+  async execute(data: CreateTransferDTO, userId: string): Promise<Transaction> {
     // Validate input
     if (!data.description || data.description.trim().length === 0) {
       throw new Error('Transfer description is required');
@@ -40,6 +40,15 @@ export class CreateTransferUseCase {
     const toAccount = await this.accountRepository.findById(data.toAccountId);
     if (!toAccount) {
       throw new Error('Destination account not found');
+    }
+
+    // SECURITY: Verify both accounts belong to the requesting user
+    if (fromAccount.userId !== userId) {
+      throw new Error('Unauthorized: Source account does not belong to you');
+    }
+
+    if (toAccount.userId !== userId) {
+      throw new Error('Unauthorized: Destination account does not belong to you');
     }
 
     // Check if source account has sufficient balance

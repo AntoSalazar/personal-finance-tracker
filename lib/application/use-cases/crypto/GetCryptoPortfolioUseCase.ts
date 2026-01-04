@@ -12,8 +12,8 @@ export interface PortfolioSummary {
 export class GetCryptoPortfolioUseCase {
   constructor(private cryptoRepository: ICryptoRepository) {}
 
-  async execute(): Promise<PortfolioSummary> {
-    const holdings = await this.cryptoRepository.findAllHoldings();
+  async execute(userId: string): Promise<PortfolioSummary> {
+    const holdings = await this.cryptoRepository.findAllHoldings(userId);
 
     const totalValue = holdings.reduce(
       (sum, holding) => sum + holding.amount * holding.currentPrice,
@@ -37,11 +37,11 @@ export class GetCryptoPortfolioUseCase {
     };
   }
 
-  async getById(id: string): Promise<CryptoHolding | null> {
-    return await this.cryptoRepository.findHoldingById(id);
+  async getById(id: string, userId: string): Promise<CryptoHolding | null> {
+    return await this.cryptoRepository.findHoldingById(id, userId);
   }
 
-  async getBySymbol(symbol: string): Promise<CryptoHolding[]> {
-    return await this.cryptoRepository.findHoldingBySymbol(symbol);
+  async getBySymbol(symbol: string, userId: string): Promise<CryptoHolding[]> {
+    return await this.cryptoRepository.findHoldingBySymbol(symbol, userId);
   }
 }

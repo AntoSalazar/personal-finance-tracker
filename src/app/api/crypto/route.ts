@@ -33,7 +33,7 @@ export const GET = withAuth(async (req: NextRequest, userId: string) => {
     const repository = new PrismaCryptoRepository();
     const useCase = new GetCryptoPortfolioUseCase(repository);
 
-    const portfolio = await useCase.execute();
+    const portfolio = await useCase.execute(userId);
 
     return NextResponse.json(portfolio);
   } catch (error) {

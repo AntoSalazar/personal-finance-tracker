@@ -16,10 +16,10 @@ export class SellCryptoHoldingUseCase {
     data: SellCryptoHoldingDTO,
     userId: string
   ): Promise<CryptoHolding> {
-    // Validate holding exists
-    const holding = await this.cryptoRepository.findHoldingById(holdingId);
+    // Validate holding exists and belongs to user
+    const holding = await this.cryptoRepository.findHoldingById(holdingId, userId);
     if (!holding) {
-      throw new Error('Crypto holding not found');
+      throw new Error('Crypto holding not found or unauthorized');
     }
 
     // Verify holding is active (not already sold)
@@ -72,7 +72,7 @@ export class SellCryptoHoldingUseCase {
     const updatedHolding = await this.cryptoRepository.sellHolding(holdingId, {
       ...data,
       saleFee,
-    });
+    }, userId);
 
     return updatedHolding;
   }

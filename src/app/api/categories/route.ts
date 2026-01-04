@@ -26,9 +26,9 @@ export const GET = withAuth(async (req: NextRequest, userId: string) => {
 
     let categories;
     if (type) {
-      categories = await useCase.getByType(type);
+      categories = await useCase.getByType(type, userId);
     } else {
-      categories = await useCase.execute();
+      categories = await useCase.execute(userId);
     }
 
     return NextResponse.json({ categories });
@@ -47,7 +47,7 @@ export const POST = withAuth(async (req: NextRequest, userId: string) => {
     const repository = new PrismaCategoryRepository();
     const useCase = new CreateCategoryUseCase(repository);
 
-    const category = await useCase.execute(validatedData);
+    const category = await useCase.execute(validatedData, userId);
 
     return NextResponse.json(category, { status: 201 });
   } catch (error) {

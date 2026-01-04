@@ -11,23 +11,27 @@ import prisma from '../prisma-client';
 
 export class PrismaCryptoRepository implements ICryptoRepository {
   // Holdings
-  async findAllHoldings(): Promise<CryptoHolding[]> {
+  async findAllHoldings(userId: string): Promise<CryptoHolding[]> {
     const holdings = await prisma.cryptoHolding.findMany({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
     });
     return holdings as CryptoHolding[];
   }
 
-  async findHoldingById(id: string): Promise<CryptoHolding | null> {
+  async findHoldingById(id: string, userId: string): Promise<CryptoHolding | null> {
     const holding = await prisma.cryptoHolding.findUnique({
-      where: { id },
+      where: { id, userId },
     });
     return holding as CryptoHolding | null;
   }
 
-  async findHoldingBySymbol(symbol: string): Promise<CryptoHolding[]> {
+  async findHoldingBySymbol(symbol: string, userId: string): Promise<CryptoHolding[]> {
     const holdings = await prisma.cryptoHolding.findMany({
-      where: { symbol: symbol.toUpperCase() },
+      where: {
+        symbol: symbol.toUpperCase(),
+        userId
+      },
       orderBy: { purchaseDate: 'desc' },
     });
     return holdings as CryptoHolding[];
@@ -43,7 +47,16 @@ export class PrismaCryptoRepository implements ICryptoRepository {
     return holding as CryptoHolding;
   }
 
-  async updateHolding(id: string, data: UpdateCryptoHoldingDTO): Promise<CryptoHolding> {
+  async updateHolding(id: string, data: UpdateCryptoHoldingDTO, userId: string): Promise<CryptoHolding> {
+    // First verify ownership
+    const existing = await prisma.cryptoHolding.findUnique({
+      where: { id, userId },
+    });
+
+    if (!existing) {
+      throw new Error('Crypto holding not found or unauthorized');
+    }
+
     const holding = await prisma.cryptoHolding.update({
       where: { id },
       data: data.symbol ? { ...data, symbol: data.symbol.toUpperCase() } : data,
@@ -51,13 +64,31 @@ export class PrismaCryptoRepository implements ICryptoRepository {
     return holding as CryptoHolding;
   }
 
-  async deleteHolding(id: string): Promise<void> {
+  async deleteHolding(id: string, userId: string): Promise<void> {
+    // First verify ownership
+    const existing = await prisma.cryptoHolding.findUnique({
+      where: { id, userId },
+    });
+
+    if (!existing) {
+      throw new Error('Crypto holding not found or unauthorized');
+    }
+
     await prisma.cryptoHolding.delete({
       where: { id },
     });
   }
 
-  async updateHoldingPrice(id: string, price: number): Promise<void> {
+  async updateHoldingPrice(id: string, price: number, userId: string): Promise<void> {
+    // First verify ownership
+    const existing = await prisma.cryptoHolding.findUnique({
+      where: { id, userId },
+    });
+
+    if (!existing) {
+      throw new Error('Crypto holding not found or unauthorized');
+    }
+
     await prisma.cryptoHolding.update({
       where: { id },
       data: {
@@ -67,7 +98,16 @@ export class PrismaCryptoRepository implements ICryptoRepository {
     });
   }
 
-  async sellHolding(id: string, data: SellCryptoHoldingDTO): Promise<CryptoHolding> {
+  async sellHolding(id: string, data: SellCryptoHoldingDTO, userId: string): Promise<CryptoHolding> {
+    // First verify ownership
+    const existing = await prisma.cryptoHolding.findUnique({
+      where: { id, userId },
+    });
+
+    if (!existing) {
+      throw new Error('Crypto holding not found or unauthorized');
+    }
+
     const holding = await prisma.cryptoHolding.update({
       where: { id },
       data: {

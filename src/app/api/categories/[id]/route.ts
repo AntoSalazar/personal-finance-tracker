@@ -23,7 +23,7 @@ export const GET = withAuth(async (req: NextRequest, userId: string, context?: {
     const repository = new PrismaCategoryRepository();
     const useCase = new GetCategoriesUseCase(repository);
 
-    const category = await useCase.getById(id);
+    const category = await useCase.getById(id, userId);
 
     if (!category) {
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
@@ -46,7 +46,7 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, context?: {
     const repository = new PrismaCategoryRepository();
     const useCase = new UpdateCategoryUseCase(repository);
 
-    const category = await useCase.execute(id, validatedData);
+    const category = await useCase.execute(id, validatedData, userId);
 
     return NextResponse.json(category);
   } catch (error) {
@@ -68,7 +68,7 @@ export const DELETE = withAuth(async (req: NextRequest, userId: string, context?
     const repository = new PrismaCategoryRepository();
     const useCase = new DeleteCategoryUseCase(repository);
 
-    await useCase.execute(id);
+    await useCase.execute(id, userId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

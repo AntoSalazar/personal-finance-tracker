@@ -19,11 +19,12 @@ export const POST = withAuth(async (req: NextRequest, userId: string) => {
     const body = await req.json();
     const validatedData = createTransferSchema.parse(body);
 
-    // Find or create a "Transfer" category
+    // Find or create a "Transfer" category for this user
     let transferCategory = await prisma.category.findFirst({
       where: {
         name: 'Transfer',
-        type: 'EXPENSE', // We'll use EXPENSE type for the category
+        type: 'EXPENSE',
+        userId, // SECURITY: Filter by user
       },
     });
 
@@ -35,6 +36,7 @@ export const POST = withAuth(async (req: NextRequest, userId: string) => {
           type: 'EXPENSE',
           color: '#6B7280',
           icon: 'ArrowRightLeft',
+          userId, // SECURITY: Assign to user
         },
       });
     }
@@ -46,7 +48,7 @@ export const POST = withAuth(async (req: NextRequest, userId: string) => {
     const transfer = await useCase.execute({
       ...validatedData,
       categoryId: transferCategory.id,
-    } as any);
+    } as any, userId); // SECURITY: Pass userId
 
     return NextResponse.json(transfer, { status: 201 });
   } catch (error) {
