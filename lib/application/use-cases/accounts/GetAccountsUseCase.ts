@@ -4,8 +4,8 @@ import { Account } from '@/lib/domain/entities/Account';
 export class GetAccountsUseCase {
   constructor(private accountRepository: IAccountRepository) {}
 
-  async execute(): Promise<Account[]> {
-    return await this.accountRepository.findAll();
+  async execute(userId: string): Promise<Account[]> {
+    return await this.accountRepository.findByUserId(userId);
   }
 
   async getById(id: string): Promise<Account | null> {
@@ -16,7 +16,10 @@ export class GetAccountsUseCase {
     return await this.accountRepository.findByType(type);
   }
 
-  async getTotalBalance(): Promise<number> {
-    return await this.accountRepository.getTotalBalance();
+  async getTotalBalance(userId: string): Promise<number> {
+    const accounts = await this.accountRepository.findByUserId(userId);
+    return accounts
+      .filter(account => account.isActive)
+      .reduce((total, account) => total + account.balance, 0);
   }
 }

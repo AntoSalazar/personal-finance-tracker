@@ -22,8 +22,8 @@ export const GET = withAuth(async (req: NextRequest, userId: string) => {
     const repository = new PrismaAccountRepository();
     const useCase = new GetAccountsUseCase(repository);
 
-    const accounts = await useCase.execute();
-    const totalBalance = await useCase.getTotalBalance();
+    const accounts = await useCase.execute(userId);
+    const totalBalance = await useCase.getTotalBalance(userId);
 
     return NextResponse.json({
       accounts,
