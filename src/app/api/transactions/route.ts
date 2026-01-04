@@ -58,7 +58,7 @@ export const GET = withAuth(async (req: NextRequest, userId: string) => {
     const repository = new PrismaTransactionRepository();
     const useCase = new GetTransactionsUseCase(repository);
 
-    const transactions = await useCase.execute({
+    const transactions = await useCase.execute(userId, {
       accountId,
       categoryId,
       type: type as any,

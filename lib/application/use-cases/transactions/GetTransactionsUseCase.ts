@@ -4,8 +4,8 @@ import { Transaction, TransactionFilter } from '@/lib/domain/entities/Transactio
 export class GetTransactionsUseCase {
   constructor(private transactionRepository: ITransactionRepository) {}
 
-  async execute(filter?: TransactionFilter): Promise<Transaction[]> {
-    return await this.transactionRepository.findAll(filter);
+  async execute(userId: string, filter?: TransactionFilter): Promise<Transaction[]> {
+    return await this.transactionRepository.findByUserId(userId, filter);
   }
 
   async getById(id: string): Promise<Transaction | null> {
