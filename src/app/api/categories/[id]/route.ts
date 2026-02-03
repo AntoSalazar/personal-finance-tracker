@@ -16,7 +16,103 @@ const updateCategorySchema = z.object({
   parentId: z.string().optional(),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UpdateCategoryInput:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         color:
+ *           type: string
+ *         icon:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [EXPENSE, INCOME]
+ *         parentId:
+ *           type: string
+ */
+
 // GET /api/categories/[id] - Get category by ID
+/**
+ * @swagger
+ * /api/categories/{id}:
+ *   get:
+ *     summary: Get a category by ID
+ *     description: Retrieve details of a specific category.
+ *     tags:
+ *       - Categories
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved category details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Category'
+ *       404:
+ *         description: Category not found
+ *       500:
+ *         description: Internal server error
+ *   put:
+ *     summary: Update a category
+ *     description: Update details of an existing category.
+ *     tags:
+ *       - Categories
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateCategoryInput'
+ *     responses:
+ *       200:
+ *         description: Category successfully updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Category'
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Category not found
+ *       500:
+ *         description: Internal server error
+ *   delete:
+ *     summary: Delete a category
+ *     description: Permanently delete a category.
+ *     tags:
+ *       - Categories
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Category successfully deleted
+ *       404:
+ *         description: Category not found
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await context!.params;

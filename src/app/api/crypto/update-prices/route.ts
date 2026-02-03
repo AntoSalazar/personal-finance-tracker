@@ -3,6 +3,20 @@ import { withAuth, createErrorResponse } from '@/lib/infrastructure/api/auth-mid
 import { cryptoPriceUpdater } from '@/lib/infrastructure/crypto/price-updater';
 
 // POST /api/crypto/update-prices - Manually trigger price update
+/**
+ * @swagger
+ * /api/crypto/update-prices:
+ *   post:
+ *     summary: Trigger manual price update
+ *     description: Force an immediate update of all crypto prices.
+ *     tags:
+ *       - Crypto
+ *     responses:
+ *       200:
+ *         description: Crypto prices updated successfully
+ *       500:
+ *         description: Internal server error
+ */
 export const POST = withAuth(async (req: NextRequest, userId: string) => {
   try {
     await cryptoPriceUpdater.updateAllPrices();

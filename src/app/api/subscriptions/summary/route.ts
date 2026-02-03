@@ -4,6 +4,31 @@ import { PrismaSubscriptionRepository } from '@/lib/infrastructure/database/repo
 import { GetSubscriptionsUseCase } from '@/lib/application/use-cases/subscriptions/GetSubscriptionsUseCase';
 
 // GET /api/subscriptions/summary - Get subscriptions summary for the authenticated user
+/**
+ * @swagger
+ * /api/subscriptions/summary:
+ *   get:
+ *     summary: Get subscriptions summary
+ *     description: Retrieve total monthly and yearly costs of active subscriptions.
+ *     tags:
+ *       - Subscriptions
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved summary
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalMonthly:
+ *                   type: number
+ *                 totalYearly:
+ *                   type: number
+ *                 count:
+ *                   type: number
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string) => {
   try {
     const repository = new PrismaSubscriptionRepository();

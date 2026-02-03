@@ -4,6 +4,38 @@ import { PrismaTransactionRepository, PrismaAccountRepository } from '@/lib/infr
 import { GetStatisticsUseCase } from '@/lib/application/use-cases/statistics/GetStatisticsUseCase';
 
 // GET /api/statistics - Get financial statistics
+/**
+ * @swagger
+ * /api/statistics:
+ *   get:
+ *     summary: Get financial statistics
+ *     description: Retrieve statistics for a specified period.
+ *     tags:
+ *       - Statistics
+ *     parameters:
+ *       - name: period
+ *         in: query
+ *         schema:
+ *           type: string
+ *           default: month
+ *         description: Time period for statistics (e.g., month, year)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 income:
+ *                   type: number
+ *                 expenses:
+ *                   type: number
+ *                 balance:
+ *                   type: number
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string) => {
   try {
     const searchParams = req.nextUrl.searchParams;

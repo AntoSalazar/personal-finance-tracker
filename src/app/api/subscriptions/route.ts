@@ -17,7 +17,120 @@ const createSubscriptionSchema = z.object({
   notes: z.string().optional(),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Subscription:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         frequency:
+ *           type: string
+ *           enum: [WEEKLY, MONTHLY, QUARTERLY, YEARLY]
+ *         nextBillingDate:
+ *           type: string
+ *           format: date-time
+ *         accountId:
+ *           type: string
+ *         categoryId:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum: [ACTIVE, PAUSED, CANCELLED]
+ *         notes:
+ *           type: string
+ *     CreateSubscriptionInput:
+ *       type: object
+ *       required:
+ *         - name
+ *         - amount
+ *         - frequency
+ *         - nextBillingDate
+ *         - accountId
+ *         - categoryId
+ *       properties:
+ *         name:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         frequency:
+ *           type: string
+ *           enum: [WEEKLY, MONTHLY, QUARTERLY, YEARLY]
+ *         nextBillingDate:
+ *           type: string
+ *           format: date
+ *         accountId:
+ *           type: string
+ *         categoryId:
+ *           type: string
+ *         notes:
+ *           type: string
+ */
+
 // GET /api/subscriptions - Get all subscriptions for the authenticated user
+/**
+ * @swagger
+ * /api/subscriptions:
+ *   get:
+ *     summary: Get all subscriptions
+ *     description: Retrieve a list of subscriptions, optionally filtered by status or account.
+ *     tags:
+ *       - Subscriptions
+ *     parameters:
+ *       - name: status
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, PAUSED, CANCELLED]
+ *         description: Filter by subscription status
+ *       - name: accountId
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: Filter by account ID
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved subscriptions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 subscriptions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Subscription'
+ *       500:
+ *         description: Internal server error
+ *   post:
+ *     summary: Create a new subscription
+ *     description: Track a recurring payment.
+ *     tags:
+ *       - Subscriptions
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateSubscriptionInput'
+ *     responses:
+ *       201:
+ *         description: Subscription successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Subscription'
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string) => {
   try {
     const searchParams = req.nextUrl.searchParams;

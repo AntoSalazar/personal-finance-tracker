@@ -27,7 +27,108 @@ const createHoldingSchema = z.object({
   categoryId: z.string().optional(),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     CryptoHolding:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         symbol:
+ *           type: string
+ *         name:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         purchasePrice:
+ *           type: number
+ *         currentPrice:
+ *           type: number
+ *         purchaseDate:
+ *           type: string
+ *           format: date-time
+ *         purchaseFee:
+ *           type: number
+ *         notes:
+ *           type: string
+ *     CreateCryptoHoldingInput:
+ *       type: object
+ *       required:
+ *         - symbol
+ *         - name
+ *         - amount
+ *         - purchasePrice
+ *         - purchaseDate
+ *       properties:
+ *         symbol:
+ *           type: string
+ *         name:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         purchasePrice:
+ *           type: number
+ *         purchaseDate:
+ *           type: string
+ *           format: date
+ *         purchaseFee:
+ *           type: number
+ *         notes:
+ *           type: string
+ *         accountId:
+ *           type: string
+ *         categoryId:
+ *           type: string
+ */
+
 // GET /api/crypto - Get crypto portfolio
+/**
+ * @swagger
+ * /api/crypto:
+ *   get:
+ *     summary: Get crypto portfolio
+ *     description: Retrieve all crypto holdings for the user.
+ *     tags:
+ *       - Crypto
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved crypto portfolio
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 holdings:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/CryptoHolding'
+ *       500:
+ *         description: Internal server error
+ *   post:
+ *     summary: Create a crypto holding
+ *     description: Add a new cryptocurrency holding to the portfolio.
+ *     tags:
+ *       - Crypto
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateCryptoHoldingInput'
+ *     responses:
+ *       201:
+ *         description: Crypto holding successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CryptoHolding'
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string) => {
   try {
     const repository = new PrismaCryptoRepository();

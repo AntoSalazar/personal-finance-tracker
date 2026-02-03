@@ -14,7 +14,101 @@ const updateDebtSchema = z.object({
   notes: z.string().optional(),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UpdateDebtInput:
+ *       type: object
+ *       properties:
+ *         personName:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         description:
+ *           type: string
+ *         dueDate:
+ *           type: string
+ *           format: date
+ *         notes:
+ *           type: string
+ */
+
 // GET /api/debts/[id] - Get specific debt
+/**
+ * @swagger
+ * /api/debts/{id}:
+ *   get:
+ *     summary: Get a debt by ID
+ *     description: Retrieve details of a specific debt.
+ *     tags:
+ *       - Debts
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved debt details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Debt'
+ *       404:
+ *         description: Debt not found
+ *       500:
+ *         description: Internal server error
+ *   put:
+ *     summary: Update a debt
+ *     description: Update details of an existing debt.
+ *     tags:
+ *       - Debts
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateDebtInput'
+ *     responses:
+ *       200:
+ *         description: Debt successfully updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Debt'
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Debt not found
+ *       500:
+ *         description: Internal server error
+ *   delete:
+ *     summary: Delete a debt
+ *     description: Permanently delete a debt.
+ *     tags:
+ *       - Debts
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Debt successfully deleted
+ *       404:
+ *         description: Debt not found
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await context!.params;

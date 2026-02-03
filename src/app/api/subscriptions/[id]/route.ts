@@ -19,7 +19,109 @@ const updateSubscriptionSchema = z.object({
   notes: z.string().optional(),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UpdateSubscriptionInput:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         frequency:
+ *           type: string
+ *           enum: [WEEKLY, MONTHLY, QUARTERLY, YEARLY]
+ *         nextBillingDate:
+ *           type: string
+ *           format: date
+ *         accountId:
+ *           type: string
+ *         categoryId:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum: [ACTIVE, PAUSED, CANCELLED]
+ *         notes:
+ *           type: string
+ */
+
 // GET /api/subscriptions/[id] - Get specific subscription
+/**
+ * @swagger
+ * /api/subscriptions/{id}:
+ *   get:
+ *     summary: Get a subscription by ID
+ *     description: Retrieve details of a specific subscription.
+ *     tags:
+ *       - Subscriptions
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved subscription details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Subscription'
+ *       404:
+ *         description: Subscription not found
+ *       500:
+ *         description: Internal server error
+ *   put:
+ *     summary: Update a subscription
+ *     description: Update details of an existing subscription.
+ *     tags:
+ *       - Subscriptions
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateSubscriptionInput'
+ *     responses:
+ *       200:
+ *         description: Subscription successfully updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Subscription'
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Subscription not found
+ *       500:
+ *         description: Internal server error
+ *   delete:
+ *     summary: Delete a subscription
+ *     description: Permanently delete a subscription.
+ *     tags:
+ *       - Subscriptions
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Subscription successfully deleted
+ *       404:
+ *         description: Subscription not found
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string, context?: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await context!.params;

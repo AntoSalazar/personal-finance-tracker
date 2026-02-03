@@ -4,6 +4,31 @@ import { PrismaDebtRepository } from '@/lib/infrastructure/database/repositories
 import { GetDebtsUseCase } from '@/lib/application/use-cases/debts/GetDebtsUseCase';
 
 // GET /api/debts/summary - Get debts summary for the authenticated user
+/**
+ * @swagger
+ * /api/debts/summary:
+ *   get:
+ *     summary: Get debts summary
+ *     description: Retrieve a summary of total debts owed and total payments made.
+ *     tags:
+ *       - Debts
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved debts summary
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalOwed:
+ *                   type: number
+ *                 totalPaid:
+ *                   type: number
+ *                 count:
+ *                   type: number
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string) => {
   try {
     const repository = new PrismaDebtRepository();

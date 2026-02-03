@@ -13,7 +13,102 @@ const createDebtSchema = z.object({
   notes: z.string().optional(),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Debt:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         personName:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         description:
+ *           type: string
+ *         dueDate:
+ *           type: string
+ *           format: date-time
+ *         isPaid:
+ *           type: boolean
+ *         paidDate:
+ *           type: string
+ *           format: date-time
+ *         notes:
+ *           type: string
+ *     CreateDebtInput:
+ *       type: object
+ *       required:
+ *         - personName
+ *         - amount
+ *       properties:
+ *         personName:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         description:
+ *           type: string
+ *         dueDate:
+ *           type: string
+ *           format: date
+ *         notes:
+ *           type: string
+ */
+
 // GET /api/debts - Get all debts for the authenticated user
+/**
+ * @swagger
+ * /api/debts:
+ *   get:
+ *     summary: Get all debts
+ *     description: Retrieve a list of debts, optionally filtered by paid status.
+ *     tags:
+ *       - Debts
+ *     parameters:
+ *       - name: isPaid
+ *         in: query
+ *         schema:
+ *           type: boolean
+ *         description: Filter by paid status
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved debts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 debts:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Debt'
+ *       500:
+ *         description: Internal server error
+ *   post:
+ *     summary: Create a new debt record
+ *     description: Track a new debt owed to or by someone.
+ *     tags:
+ *       - Debts
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateDebtInput'
+ *     responses:
+ *       201:
+ *         description: Debt successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Debt'
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string) => {
   try {
     const searchParams = req.nextUrl.searchParams;

@@ -58,6 +58,25 @@ const styleDataRows = (worksheet: ExcelJS.Worksheet, startRow: number) => {
 };
 
 // GET /api/export - Export all financial data to Excel
+/**
+ * @swagger
+ * /api/export:
+ *   get:
+ *     summary: Export data to Excel
+ *     description: Download a comprehensive Excel report of all financial data.
+ *     tags:
+ *       - Export
+ *     responses:
+ *       200:
+ *         description: Successfully generated Excel file
+ *         content:
+ *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string) => {
   try {
     // Fetch all data
@@ -123,12 +142,14 @@ export const GET = withAuth(async (req: NextRequest, userId: string) => {
       { metric: 'SUBSCRIPTIONS', value: '' },
       { metric: 'Total Subscriptions', value: subscriptions.length.toString() },
       { metric: 'Active Subscriptions', value: subscriptions.filter((s: any) => s.status === 'ACTIVE').length.toString() },
-      { metric: 'Monthly Cost', value: formatCurrency(
-        subscriptions.filter((s: any) => s.status === 'ACTIVE').reduce((sum: number, s: any) => {
-          const multiplier = s.frequency === 'WEEKLY' ? 4.33 : s.frequency === 'MONTHLY' ? 1 : s.frequency === 'QUARTERLY' ? 0.33 : 0.083;
-          return sum + (s.amount * multiplier);
-        }, 0)
-      )},
+      {
+        metric: 'Monthly Cost', value: formatCurrency(
+          subscriptions.filter((s: any) => s.status === 'ACTIVE').reduce((sum: number, s: any) => {
+            const multiplier = s.frequency === 'WEEKLY' ? 4.33 : s.frequency === 'MONTHLY' ? 1 : s.frequency === 'QUARTERLY' ? 0.33 : 0.083;
+            return sum + (s.amount * multiplier);
+          }, 0)
+        )
+      },
     ];
     summaryData.forEach(row => summarySheet.addRow(row));
     styleDataRows(summarySheet, 1);

@@ -14,9 +14,96 @@ const createAccountSchema = z.object({
   description: z.string().optional(),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Account:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [CHECKING, SAVINGS, CREDIT_CARD, INVESTMENT, CASH, OTHER]
+ *         balance:
+ *           type: number
+ *         currency:
+ *           type: string
+ *         description:
+ *           type: string
+ *     CreateAccountInput:
+ *       type: object
+ *       required:
+ *         - name
+ *         - type
+ *         - balance
+ *       properties:
+ *         name:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [CHECKING, SAVINGS, CREDIT_CARD, INVESTMENT, CASH, OTHER]
+ *         balance:
+ *           type: number
+ *         currency:
+ *           type: string
+ *           default: USD
+ *         description:
+ *           type: string
+ */
+
 type CreateAccountInput = z.infer<typeof createAccountSchema>;
 
-// GET /api/accounts - Get all accounts
+/**
+ * @swagger
+ * /api/accounts:
+ *   get:
+ *     summary: Get all accounts
+ *     description: Retrieve a list of all accounts for the authenticated user along with the total balance.
+ *     tags:
+ *       - Accounts
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved accounts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accounts:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Account'
+ *                 totalBalance:
+ *                   type: number
+ *       500:
+ *         description: Internal server error
+ *   post:
+ *     summary: Create a new account
+ *     description: Create a new financial account for the user.
+ *     tags:
+ *       - Accounts
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateAccountInput'
+ *     responses:
+ *       201:
+ *         description: Account successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Account'
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string) => {
   try {
     const repository = new PrismaAccountRepository();

@@ -45,7 +45,142 @@ const createTransactionSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Transaction:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         accountId:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         type:
+ *           type: string
+ *           enum: [EXPENSE, INCOME, TRANSFER]
+ *         description:
+ *           type: string
+ *         reason:
+ *           type: string
+ *         categoryId:
+ *           type: string
+ *         date:
+ *           type: string
+ *           format: date-time
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *     CreateTransactionInput:
+ *       type: object
+ *       required:
+ *         - accountId
+ *         - amount
+ *         - type
+ *         - description
+ *         - categoryId
+ *         - date
+ *       properties:
+ *         accountId:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         type:
+ *           type: string
+ *           enum: [EXPENSE, INCOME, TRANSFER]
+ *         description:
+ *           type: string
+ *         reason:
+ *           type: string
+ *         categoryId:
+ *           type: string
+ *         date:
+ *           type: string
+ *           format: date
+ *           description: YYYY-MM-DD
+ *         tags:
+ *           type: array
+ *           items:
+ *             type: string
+ */
+
 // GET /api/transactions - Get all transactions with optional filters
+/**
+ * @swagger
+ * /api/transactions:
+ *   get:
+ *     summary: Get all transactions
+ *     description: Retrieve a list of transactions, optionally filtered by account, category, type, or date range.
+ *     tags:
+ *       - Transactions
+ *     parameters:
+ *       - name: accountId
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: Filter by account ID
+ *       - name: categoryId
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: Filter by category ID
+ *       - name: type
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [EXPENSE, INCOME, TRANSFER]
+ *         description: Filter by transaction type
+ *       - name: startDate
+ *         in: query
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter transactions after this date (YYYY-MM-DD)
+ *       - name: endDate
+ *         in: query
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter transactions before this date (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved transactions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 transactions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Transaction'
+ *       500:
+ *         description: Internal server error
+ *   post:
+ *     summary: Create a new transaction
+ *     description: Create a new transaction entry (expense, income, or transfer).
+ *     tags:
+ *       - Transactions
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateTransactionInput'
+ *     responses:
+ *       201:
+ *         description: Transaction successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Transaction'
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 export const GET = withAuth(async (req: NextRequest, userId: string) => {
   try {
     const searchParams = req.nextUrl.searchParams;

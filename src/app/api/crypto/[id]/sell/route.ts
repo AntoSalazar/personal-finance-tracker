@@ -16,6 +16,65 @@ const sellCryptoSchema = z.object({
   categoryId: z.string().min(1, 'Category is required'),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     SellCryptoHoldingInput:
+ *       type: object
+ *       required:
+ *         - salePrice
+ *         - saleDate
+ *         - saleAccountId
+ *         - categoryId
+ *       properties:
+ *         salePrice:
+ *           type: number
+ *         saleDate:
+ *           type: string
+ *           format: date-time
+ *         saleFee:
+ *           type: number
+ *         saleAccountId:
+ *           type: string
+ *         categoryId:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /api/crypto/{id}/sell:
+ *   post:
+ *     summary: Sell a crypto holding
+ *     description: Sell an existing crypto holding or a portion of it.
+ *     tags:
+ *       - Crypto
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SellCryptoHoldingInput'
+ *     responses:
+ *       200:
+ *         description: Crypto holding successfully sold
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CryptoHolding'
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Crypto holding not found
+ *       500:
+ *         description: Internal server error
+ */
 export const POST = withAuth(async (
   request: NextRequest,
   userId: string,

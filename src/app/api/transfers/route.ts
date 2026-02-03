@@ -13,7 +13,59 @@ const createTransferSchema = z.object({
   date: z.string().transform((val) => new Date(val)),
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     CreateTransferInput:
+ *       type: object
+ *       required:
+ *         - fromAccountId
+ *         - toAccountId
+ *         - amount
+ *         - description
+ *         - date
+ *       properties:
+ *         fromAccountId:
+ *           type: string
+ *         toAccountId:
+ *           type: string
+ *         amount:
+ *           type: number
+ *         description:
+ *           type: string
+ *         date:
+ *           type: string
+ *           format: date
+ */
+
 // POST /api/transfers - Create new transfer between accounts
+/**
+ * @swagger
+ * /api/transfers:
+ *   post:
+ *     summary: Create a transfer
+ *     description: Transfer money between two accounts.
+ *     tags:
+ *       - Transactions
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateTransferInput'
+ *     responses:
+ *       201:
+ *         description: Transfer successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Transaction'
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 export const POST = withAuth(async (req: NextRequest, userId: string) => {
   try {
     const body = await req.json();
