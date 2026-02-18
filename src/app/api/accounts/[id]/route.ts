@@ -58,6 +58,10 @@ const updateAccountSchema = z.object({
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Account'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - account belongs to another user
  *       404:
  *         description: Account not found
  *       500:
@@ -88,6 +92,10 @@ const updateAccountSchema = z.object({
  *               $ref: '#/components/schemas/Account'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - account belongs to another user
  *       404:
  *         description: Account not found
  *       500:
@@ -106,6 +114,17 @@ const updateAccountSchema = z.object({
  *     responses:
  *       200:
  *         description: Account successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - account belongs to another user
  *       404:
  *         description: Account not found
  *       500:

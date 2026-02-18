@@ -25,6 +25,8 @@ import { ProcessSubscriptionUseCase } from '@/lib/application/use-cases/subscrip
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Subscription'
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Subscription not found
  *       500:

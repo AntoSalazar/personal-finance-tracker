@@ -104,6 +104,16 @@ const createHoldingSchema = z.object({
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/CryptoHolding'
+ *                 totalValue:
+ *                   type: number
+ *                 totalCost:
+ *                   type: number
+ *                 totalProfitLoss:
+ *                   type: number
+ *                 profitLossPercentage:
+ *                   type: number
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  *   post:
@@ -126,6 +136,8 @@ const createHoldingSchema = z.object({
  *               $ref: '#/components/schemas/CryptoHolding'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */

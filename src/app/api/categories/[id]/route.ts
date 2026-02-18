@@ -60,6 +60,8 @@ const updateCategorySchema = z.object({
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Category'
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Category not found
  *       500:
@@ -90,6 +92,8 @@ const updateCategorySchema = z.object({
  *               $ref: '#/components/schemas/Category'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Category not found
  *       500:
@@ -108,6 +112,15 @@ const updateCategorySchema = z.object({
  *     responses:
  *       200:
  *         description: Category successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Category not found
  *       500:

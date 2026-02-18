@@ -74,6 +74,8 @@ const styleDataRows = (worksheet: ExcelJS.Worksheet, startRow: number) => {
  *             schema:
  *               type: string
  *               format: binary
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */

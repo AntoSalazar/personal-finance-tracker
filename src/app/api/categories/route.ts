@@ -86,6 +86,8 @@ const createCategorySchema = z.object({
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Category'
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  *   post:
@@ -108,6 +110,8 @@ const createCategorySchema = z.object({
  *               $ref: '#/components/schemas/Category'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */

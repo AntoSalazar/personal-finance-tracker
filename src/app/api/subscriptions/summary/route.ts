@@ -9,7 +9,7 @@ import { GetSubscriptionsUseCase } from '@/lib/application/use-cases/subscriptio
  * /api/subscriptions/summary:
  *   get:
  *     summary: Get subscriptions summary
- *     description: Retrieve total monthly and yearly costs of active subscriptions.
+ *     description: Retrieve a summary of all subscriptions grouped by status and total monthly cost.
  *     tags:
  *       - Subscriptions
  *     responses:
@@ -20,12 +20,22 @@ import { GetSubscriptionsUseCase } from '@/lib/application/use-cases/subscriptio
  *             schema:
  *               type: object
  *               properties:
- *                 totalMonthly:
+ *                 totalSubscriptions:
  *                   type: number
- *                 totalYearly:
+ *                 activeSubscriptions:
  *                   type: number
- *                 count:
+ *                 pausedSubscriptions:
  *                   type: number
+ *                 cancelledSubscriptions:
+ *                   type: number
+ *                 totalMonthlyAmount:
+ *                   type: number
+ *                   description: Total cost normalized to monthly amount
+ *                 nextBillingDate:
+ *                   type: string
+ *                   format: date-time
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */

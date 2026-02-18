@@ -25,7 +25,9 @@ import { ProcessSubscriptionUseCase } from '@/lib/application/use-cases/subscrip
  *                 subscriptions:
  *                   type: array
  *                   items:
- *                     type: string
+ *                     $ref: '#/components/schemas/Subscription'
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */

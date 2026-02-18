@@ -56,6 +56,10 @@ const updateDebtSchema = z.object({
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Debt'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - debt belongs to another user
  *       404:
  *         description: Debt not found
  *       500:
@@ -86,6 +90,8 @@ const updateDebtSchema = z.object({
  *               $ref: '#/components/schemas/Debt'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Debt not found
  *       500:
@@ -104,6 +110,15 @@ const updateDebtSchema = z.object({
  *     responses:
  *       200:
  *         description: Debt successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Debt not found
  *       500:

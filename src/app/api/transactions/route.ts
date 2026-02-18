@@ -156,6 +156,8 @@ const createTransactionSchema = z.object({
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Transaction'
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  *   post:
@@ -178,6 +180,8 @@ const createTransactionSchema = z.object({
  *               $ref: '#/components/schemas/Transaction'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */

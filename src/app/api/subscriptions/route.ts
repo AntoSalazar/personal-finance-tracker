@@ -106,6 +106,8 @@ const createSubscriptionSchema = z.object({
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Subscription'
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  *   post:
@@ -128,6 +130,8 @@ const createSubscriptionSchema = z.object({
  *               $ref: '#/components/schemas/Subscription'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */

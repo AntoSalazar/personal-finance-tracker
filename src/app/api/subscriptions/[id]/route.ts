@@ -69,6 +69,10 @@ const updateSubscriptionSchema = z.object({
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Subscription'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - subscription belongs to another user
  *       404:
  *         description: Subscription not found
  *       500:
@@ -99,6 +103,8 @@ const updateSubscriptionSchema = z.object({
  *               $ref: '#/components/schemas/Subscription'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Subscription not found
  *       500:
@@ -117,6 +123,15 @@ const updateSubscriptionSchema = z.object({
  *     responses:
  *       200:
  *         description: Subscription successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Subscription not found
  *       500:

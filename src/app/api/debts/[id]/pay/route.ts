@@ -61,6 +61,8 @@ const markAsPaidSchema = z.object({
  *               $ref: '#/components/schemas/Debt'
  *       400:
  *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Debt not found
  *       500:

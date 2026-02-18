@@ -12,6 +12,13 @@ import { cryptoPriceUpdater } from '@/lib/infrastructure/crypto/price-updater';
  *     responses:
  *       200:
  *         description: Price updater started successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       500:
  *         description: Internal server error
  */

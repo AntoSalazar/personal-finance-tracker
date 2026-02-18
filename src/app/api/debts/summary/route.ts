@@ -9,7 +9,7 @@ import { GetDebtsUseCase } from '@/lib/application/use-cases/debts/GetDebtsUseCa
  * /api/debts/summary:
  *   get:
  *     summary: Get debts summary
- *     description: Retrieve a summary of total debts owed and total payments made.
+ *     description: Retrieve a summary of total debts, amounts, and paid/unpaid breakdowns.
  *     tags:
  *       - Debts
  *     responses:
@@ -20,12 +20,20 @@ import { GetDebtsUseCase } from '@/lib/application/use-cases/debts/GetDebtsUseCa
  *             schema:
  *               type: object
  *               properties:
- *                 totalOwed:
+ *                 totalDebts:
  *                   type: number
- *                 totalPaid:
+ *                 totalAmount:
  *                   type: number
- *                 count:
+ *                 paidDebts:
  *                   type: number
+ *                 paidAmount:
+ *                   type: number
+ *                 unpaidDebts:
+ *                   type: number
+ *                 unpaidAmount:
+ *                   type: number
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */
