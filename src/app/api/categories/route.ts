@@ -123,6 +123,14 @@ export const GET = withAuth(async (req: NextRequest, userId: string) => {
     const repository = new PrismaCategoryRepository();
     const useCase = new GetCategoriesUseCase(repository);
 
+    const validTypes = Object.values(CategoryType);
+    if (type && !validTypes.includes(type as CategoryType)) {
+      return NextResponse.json(
+        { error: `Invalid category type. Must be one of: ${validTypes.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     let categories;
     if (type) {
       categories = await useCase.getByType(type, userId);

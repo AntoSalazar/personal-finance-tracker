@@ -10,7 +10,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Set to true in production with email service
+    requireEmailVerification: process.env.NODE_ENV === 'production',
     autoSignIn: true, // Automatically sign in after successful signup
   },
   account: {

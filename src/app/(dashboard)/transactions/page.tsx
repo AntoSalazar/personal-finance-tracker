@@ -5,6 +5,13 @@ import { redirect } from "next/navigation"
 import { Button } from "@/lib/presentation/components/ui/button"
 import { Plus } from "lucide-react"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/lib/presentation/components/ui/select"
+import {
   Table,
   TableBody,
   TableCell,
@@ -19,16 +26,32 @@ import axios from "axios"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { containerVariants, itemVariants, fadeInVariants } from "@/lib/presentation/animations/variants"
+import { useState } from "react"
 
 export default function TransactionsPage() {
   const { data: session, isPending } = useSession()
   const queryClient = useQueryClient()
+  const [accountFilter, setAccountFilter] = useState<string>("all")
+
+  // Fetch accounts for filter dropdown
+  const { data: accountsData } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: async () => {
+      const response = await axios.get('/api/accounts')
+      return response.data
+    },
+    enabled: !!session,
+  })
 
   // Fetch transactions data
   const { data: transactionsData, isLoading } = useQuery({
-    queryKey: ['transactions'],
+    queryKey: ['transactions', accountFilter],
     queryFn: async () => {
-      const response = await axios.get('/api/transactions')
+      const params = new URLSearchParams()
+      if (accountFilter && accountFilter !== "all") {
+        params.set('accountId', accountFilter)
+      }
+      const response = await axios.get(`/api/transactions${params.toString() ? `?${params}` : ''}`)
       return response.data
     },
     enabled: !!session,
@@ -102,6 +125,28 @@ export default function TransactionsPage() {
             </Button>
           </TransactionFormDialog>
         </motion.div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.15 }}
+        className="flex items-center gap-2"
+      >
+        <span className="text-sm text-muted-foreground">Account:</span>
+        <Select value={accountFilter} onValueChange={setAccountFilter}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="All accounts" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All accounts</SelectItem>
+            {accountsData?.accounts?.map((account: any) => (
+              <SelectItem key={account.id} value={account.id}>
+                {account.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </motion.div>
 
       <motion.div

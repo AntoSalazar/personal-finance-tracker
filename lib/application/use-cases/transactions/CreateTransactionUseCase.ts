@@ -9,7 +9,7 @@ export class CreateTransactionUseCase {
     private accountRepository: IAccountRepository
   ) {}
 
-  async execute(data: CreateTransactionDTO): Promise<Transaction> {
+  async execute(data: CreateTransactionDTO, userId: string): Promise<Transaction> {
     // Validate input
     if (!data.description || data.description.trim().length === 0) {
       throw new Error('Transaction description is required');
@@ -19,10 +19,21 @@ export class CreateTransactionUseCase {
       throw new Error('Amount must be a positive number');
     }
 
-    // Verify account exists
+    // Verify account exists and belongs to the user
     const account = await this.accountRepository.findById(data.accountId);
     if (!account) {
       throw new Error('Account not found');
+    }
+    if (account.userId !== userId) {
+      throw new Error('Account not found');
+    }
+
+    // For transfers, verify destination account also belongs to the user
+    if (data.type === 'TRANSFER' && data.toAccountId) {
+      const toAccount = await this.accountRepository.findById(data.toAccountId);
+      if (!toAccount || toAccount.userId !== userId) {
+        throw new Error('Destination account not found');
+      }
     }
 
     // Check if account has sufficient balance for expenses

@@ -89,21 +89,77 @@ export function rateLimit(config: RateLimitConfig) {
 }
 
 /**
- * Get identifier for rate limiting (IP address or user session)
+ * Get identifier for rate limiting
+ * Prefer x-real-ip (set by reverse proxy) over x-forwarded-for (spoofable)
  */
 function getIdentifier(req: NextRequest): string {
-  // Try to get IP from headers (works with proxies)
-  const forwarded = req.headers.get('x-forwarded-for');
   const realIp = req.headers.get('x-real-ip');
-  const ip = forwarded
-    ? forwarded.split(',')[0].trim()
-    : realIp || req.headers.get('host') || 'unknown';
-
-  // You could also use user ID from session for authenticated users
-  // const userId = await getSessionUserId(req);
-  // return userId || ip;
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = realIp
+    || (forwarded ? forwarded.split(',')[0].trim() : null)
+    || req.headers.get('host')
+    || 'unknown';
 
   return ip;
+}
+
+/**
+ * Get identifier for rate limiting authenticated endpoints (uses userId)
+ */
+export function getRateLimitKeyForUser(userId: string): string {
+  return `user:${userId}`;
+}
+
+/**
+ * Rate limiter with explicit key (for authenticated endpoints using userId)
+ */
+export function rateLimitWithKey(config: RateLimitConfig, key: string) {
+  return async (handler: () => Promise<NextResponse>): Promise<NextResponse> => {
+    const now = Date.now();
+
+    let entry = rateLimitStore.get(key);
+
+    if (!entry || entry.resetTime < now) {
+      entry = {
+        count: 0,
+        resetTime: now + config.windowMs,
+      };
+      rateLimitStore.set(key, entry);
+    }
+
+    entry.count++;
+
+    if (entry.count > config.maxRequests) {
+      const resetIn = Math.ceil((entry.resetTime - now) / 1000);
+      return NextResponse.json(
+        {
+          error: 'Too many requests',
+          message: `Rate limit exceeded. Try again in ${resetIn} seconds.`,
+          retryAfter: resetIn,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': resetIn.toString(),
+            'X-RateLimit-Limit': config.maxRequests.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': new Date(entry.resetTime).toISOString(),
+          },
+        }
+      );
+    }
+
+    const response = await handler();
+
+    response.headers.set('X-RateLimit-Limit', config.maxRequests.toString());
+    response.headers.set(
+      'X-RateLimit-Remaining',
+      (config.maxRequests - entry.count).toString()
+    );
+    response.headers.set('X-RateLimit-Reset', new Date(entry.resetTime).toISOString());
+
+    return response;
+  };
 }
 
 /**

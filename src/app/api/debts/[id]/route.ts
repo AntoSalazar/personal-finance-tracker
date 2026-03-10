@@ -157,7 +157,7 @@ export const PUT = withAuth(async (req: NextRequest, userId: string, context?: {
     const repository = new PrismaDebtRepository();
     const useCase = new UpdateDebtUseCase(repository);
 
-    const debt = await useCase.execute(id, validatedData);
+    const debt = await useCase.execute(id, validatedData, userId);
 
     return NextResponse.json(debt);
   } catch (error) {

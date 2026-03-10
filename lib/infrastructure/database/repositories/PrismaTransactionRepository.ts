@@ -147,52 +147,55 @@ export class PrismaTransactionRepository implements ITransactionRepository {
   async create(data: CreateTransactionDTO): Promise<Transaction> {
     const { tags, ...transactionData } = data as any;
 
-    const transaction = await prisma.transaction.create({
-      data: {
-        ...transactionData,
-        tags: tags
-          ? {
-              create: tags.map((tagId: string) => ({
-                tag: {
-                  connect: { id: tagId },
-                },
-              })),
-            }
-          : undefined,
-      },
-      include: {
-        category: true,
-        account: true,
-        tags: {
-          include: {
-            tag: true,
+    const transaction = await prisma.$transaction(async (tx) => {
+      const created = await tx.transaction.create({
+        data: {
+          ...transactionData,
+          tags: tags
+            ? {
+                create: tags.map((tagId: string) => ({
+                  tag: {
+                    connect: { id: tagId },
+                  },
+                })),
+              }
+            : undefined,
+        },
+        include: {
+          category: true,
+          account: true,
+          tags: {
+            include: {
+              tag: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    // Update account balance
-    if (data.type === 'INCOME') {
-      await prisma.account.update({
-        where: { id: data.accountId },
-        data: { balance: { increment: data.amount } },
-      });
-    } else if (data.type === 'EXPENSE') {
-      await prisma.account.update({
-        where: { id: data.accountId },
-        data: { balance: { decrement: data.amount } },
-      });
-    } else if (data.type === 'TRANSFER' && data.toAccountId) {
-      // For transfers: decrement from source, increment to destination
-      await prisma.account.update({
-        where: { id: data.accountId },
-        data: { balance: { decrement: data.amount } },
-      });
-      await prisma.account.update({
-        where: { id: data.toAccountId },
-        data: { balance: { increment: data.amount } },
-      });
-    }
+      // Update account balance atomically
+      if (data.type === 'INCOME') {
+        await tx.account.update({
+          where: { id: data.accountId },
+          data: { balance: { increment: data.amount } },
+        });
+      } else if (data.type === 'EXPENSE') {
+        await tx.account.update({
+          where: { id: data.accountId },
+          data: { balance: { decrement: data.amount } },
+        });
+      } else if (data.type === 'TRANSFER' && data.toAccountId) {
+        await tx.account.update({
+          where: { id: data.accountId },
+          data: { balance: { decrement: data.amount } },
+        });
+        await tx.account.update({
+          where: { id: data.toAccountId },
+          data: { balance: { increment: data.amount } },
+        });
+      }
+
+      return created;
+    });
 
     return transaction as any;
   }
@@ -200,108 +203,113 @@ export class PrismaTransactionRepository implements ITransactionRepository {
   async update(id: string, data: UpdateTransactionDTO): Promise<Transaction> {
     const { tags, ...transactionData } = data as any;
 
-    // Get original transaction to adjust account balance
-    const original = await prisma.transaction.findUnique({
-      where: { id },
-    });
+    const transaction = await prisma.$transaction(async (tx) => {
+      // Get original transaction to adjust account balance
+      const original = await tx.transaction.findUnique({
+        where: { id },
+      });
 
-    const transaction = await prisma.transaction.update({
-      where: { id },
-      data: {
-        ...transactionData,
-        tags: tags
-          ? {
-              deleteMany: {},
-              create: tags.map((tagId: string) => ({
-                tag: {
-                  connect: { id: tagId },
-                },
-              })),
-            }
-          : undefined,
-      },
-      include: {
-        category: true,
-        account: true,
-        tags: {
-          include: {
-            tag: true,
+      const updated = await tx.transaction.update({
+        where: { id },
+        data: {
+          ...transactionData,
+          tags: tags
+            ? {
+                deleteMany: {},
+                create: tags.map((tagId: string) => ({
+                  tag: {
+                    connect: { id: tagId },
+                  },
+                })),
+              }
+            : undefined,
+        },
+        include: {
+          category: true,
+          account: true,
+          tags: {
+            include: {
+              tag: true,
+            },
           },
         },
-      },
+      });
+
+      // Adjust account balance if amount or type changed
+      if (original && (data.amount !== undefined || data.type !== undefined)) {
+        const oldAmount = original.amount;
+        const oldType = original.type;
+        const newAmount = data.amount ?? oldAmount;
+        const newType = data.type ?? oldType;
+
+        // Reverse old transaction effect
+        if (oldType === 'INCOME') {
+          await tx.account.update({
+            where: { id: original.accountId },
+            data: { balance: { decrement: oldAmount } },
+          });
+        } else if (oldType === 'EXPENSE') {
+          await tx.account.update({
+            where: { id: original.accountId },
+            data: { balance: { increment: oldAmount } },
+          });
+        }
+
+        // Apply new transaction effect
+        const accountId = data.accountId ?? original.accountId;
+        if (newType === 'INCOME') {
+          await tx.account.update({
+            where: { id: accountId },
+            data: { balance: { increment: newAmount } },
+          });
+        } else if (newType === 'EXPENSE') {
+          await tx.account.update({
+            where: { id: accountId },
+            data: { balance: { decrement: newAmount } },
+          });
+        }
+      }
+
+      return updated;
     });
-
-    // Adjust account balance if amount or type changed
-    if (original && (data.amount !== undefined || data.type !== undefined)) {
-      const oldAmount = original.amount;
-      const oldType = original.type;
-      const newAmount = data.amount ?? oldAmount;
-      const newType = data.type ?? oldType;
-
-      // Reverse old transaction effect
-      if (oldType === 'INCOME') {
-        await prisma.account.update({
-          where: { id: original.accountId },
-          data: { balance: { decrement: oldAmount } },
-        });
-      } else if (oldType === 'EXPENSE') {
-        await prisma.account.update({
-          where: { id: original.accountId },
-          data: { balance: { increment: oldAmount } },
-        });
-      }
-
-      // Apply new transaction effect
-      const accountId = data.accountId ?? original.accountId;
-      if (newType === 'INCOME') {
-        await prisma.account.update({
-          where: { id: accountId },
-          data: { balance: { increment: newAmount } },
-        });
-      } else if (newType === 'EXPENSE') {
-        await prisma.account.update({
-          where: { id: accountId },
-          data: { balance: { decrement: newAmount } },
-        });
-      }
-    }
 
     return transaction as any;
   }
 
   async delete(id: string): Promise<void> {
-    // Get transaction to adjust account balance
-    const transaction = await prisma.transaction.findUnique({
-      where: { id },
-    });
+    await prisma.$transaction(async (tx) => {
+      // Get transaction to adjust account balance
+      const transaction = await tx.transaction.findUnique({
+        where: { id },
+      });
 
-    if (transaction) {
-      // Reverse transaction effect on account balance
-      if (transaction.type === 'INCOME') {
-        await prisma.account.update({
-          where: { id: transaction.accountId },
-          data: { balance: { decrement: transaction.amount } },
-        });
-      } else if (transaction.type === 'EXPENSE') {
-        await prisma.account.update({
-          where: { id: transaction.accountId },
-          data: { balance: { increment: transaction.amount } },
-        });
-      } else if (transaction.type === 'TRANSFER' && transaction.toAccountId) {
-        // Reverse transfer: increment source, decrement destination
-        await prisma.account.update({
-          where: { id: transaction.accountId },
-          data: { balance: { increment: transaction.amount } },
-        });
-        await prisma.account.update({
-          where: { id: transaction.toAccountId },
-          data: { balance: { decrement: transaction.amount } },
-        });
+      if (transaction) {
+        // Reverse transaction effect on account balance
+        if (transaction.type === 'INCOME') {
+          await tx.account.update({
+            where: { id: transaction.accountId },
+            data: { balance: { decrement: transaction.amount } },
+          });
+        } else if (transaction.type === 'EXPENSE') {
+          await tx.account.update({
+            where: { id: transaction.accountId },
+            data: { balance: { increment: transaction.amount } },
+          });
+        } else if (transaction.type === 'TRANSFER' && transaction.toAccountId) {
+          await tx.account.update({
+            where: { id: transaction.accountId },
+            data: { balance: { increment: transaction.amount } },
+          });
+          await tx.account.update({
+            where: { id: transaction.toAccountId },
+            data: { balance: { decrement: transaction.amount } },
+          });
+        }
       }
-    }
 
-    await prisma.transaction.delete({
-      where: { id },
+      await tx.transaction.delete({
+        where: { id },
+      });
     });
   }
 

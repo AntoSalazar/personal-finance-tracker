@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, createErrorResponse } from '@/lib/infrastructure/api/auth-middleware';
+import { withAuthAndRateLimit, createErrorResponse } from '@/lib/infrastructure/api/auth-middleware';
 import { cryptoPriceUpdater } from '@/lib/infrastructure/crypto/price-updater';
+
+const cryptoRateLimit = {
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxRequests: 2, // 2 requests per hour
+};
 
 // POST /api/crypto/update-prices - Manually trigger price update
 /**
@@ -26,7 +31,7 @@ import { cryptoPriceUpdater } from '@/lib/infrastructure/crypto/price-updater';
  *       500:
  *         description: Internal server error
  */
-export const POST = withAuth(async (req: NextRequest, userId: string) => {
+export const POST = withAuthAndRateLimit(async (req: NextRequest, userId: string) => {
   try {
     await cryptoPriceUpdater.updateAllPrices();
 
@@ -35,4 +40,4 @@ export const POST = withAuth(async (req: NextRequest, userId: string) => {
     console.error('POST /api/crypto/update-prices error:', error);
     return createErrorResponse(error);
   }
-});
+}, cryptoRateLimit);

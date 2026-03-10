@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, createErrorResponse } from '@/lib/infrastructure/api/auth-middleware';
 import { cryptoPriceUpdater } from '@/lib/infrastructure/crypto/price-updater';
 
 /**
@@ -19,10 +20,12 @@ import { cryptoPriceUpdater } from '@/lib/infrastructure/crypto/price-updater';
  *               properties:
  *                 message:
  *                   type: string
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Internal server error
  */
-export async function POST() {
+export const POST = withAuth(async (req: NextRequest, userId: string) => {
   try {
     if (cryptoPriceUpdater.isRunning()) {
       return NextResponse.json(
@@ -39,12 +42,9 @@ export async function POST() {
     );
   } catch (error) {
     console.error('Error starting price updater:', error);
-    return NextResponse.json(
-      { error: 'Failed to start price updater' },
-      { status: 500 }
-    );
+    return createErrorResponse(error);
   }
-}
+});
 
 /**
  * @swagger
@@ -64,8 +64,10 @@ export async function POST() {
  *               properties:
  *                 isRunning:
  *                   type: boolean
+ *       401:
+ *         description: Unauthorized
  */
-export async function GET() {
+export const GET = withAuth(async (req: NextRequest, userId: string) => {
   const isRunning = cryptoPriceUpdater.isRunning();
   return NextResponse.json({ isRunning });
-}
+});

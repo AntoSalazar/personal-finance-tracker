@@ -4,7 +4,7 @@ import { Debt, UpdateDebtDTO } from '@/lib/domain/entities/Debt';
 export class UpdateDebtUseCase {
   constructor(private debtRepository: IDebtRepository) {}
 
-  async execute(id: string, data: UpdateDebtDTO): Promise<Debt> {
+  async execute(id: string, data: UpdateDebtDTO, userId: string): Promise<Debt> {
     // Validate input if provided
     if (data.personName !== undefined && data.personName.trim().length === 0) {
       throw new Error('Person name cannot be empty');
@@ -17,6 +17,11 @@ export class UpdateDebtUseCase {
     // Check debt exists
     const debt = await this.debtRepository.findById(id);
     if (!debt) {
+      throw new Error('Debt not found');
+    }
+
+    // Verify ownership
+    if (debt.userId !== userId) {
       throw new Error('Debt not found');
     }
 

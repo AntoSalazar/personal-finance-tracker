@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../auth/auth';
-import { rateLimit, RateLimitPresets } from './rate-limiter';
+import { rateLimit, rateLimitWithKey, RateLimitPresets, getRateLimitKeyForUser } from './rate-limiter';
 
 export function withAuth<T = any>(
   handler: (req: NextRequest, userId: string, context?: T) => Promise<NextResponse>
@@ -38,23 +38,32 @@ export function withAuthAndRateLimit<T = any>(
   rateLimitConfig = RateLimitPresets.api
 ) {
   return async (req: NextRequest, context?: T) => {
-    // Apply rate limiting first
-    return rateLimit(rateLimitConfig)(req, async () => {
-      // Then check authentication
-      const session = await auth.api.getSession({
-        headers: req.headers,
-      });
+    // Authenticate first
+    const session = await auth.api.getSession({
+      headers: req.headers,
+    });
 
-      if (!session || !session.user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
+    // Rate limit by userId for authenticated endpoints
+    const key = getRateLimitKeyForUser(session.user.id);
+    return rateLimitWithKey(rateLimitConfig, key)(async () => {
       return handler(req, session.user.id, context);
     });
   };
 }
 
 export function createErrorResponse(error: any, status: number = 500): NextResponse {
-  const message = error instanceof Error ? error.message : 'An error occurred';
+  // Only expose error details for client errors (4xx); use generic message for server errors (5xx)
+  const message =
+    status >= 400 && status < 500 && error instanceof Error
+      ? error.message
+      : status >= 500
+        ? 'Internal server error'
+        : error instanceof Error
+          ? error.message
+          : 'An error occurred';
   return NextResponse.json({ error: message }, { status });
 }

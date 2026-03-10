@@ -12,8 +12,8 @@ export class GetAccountsUseCase {
     return await this.accountRepository.findById(id);
   }
 
-  async getByType(type: string): Promise<Account[]> {
-    return await this.accountRepository.findByType(type);
+  async getByType(type: string, userId: string): Promise<Account[]> {
+    return await this.accountRepository.findByType(type, userId);
   }
 
   async getTotalBalance(userId: string): Promise<number> {

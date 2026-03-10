@@ -222,7 +222,7 @@ export const POST = withAuth(async (req: NextRequest, userId: string) => {
     const accountRepository = new PrismaAccountRepository();
     const useCase = new CreateTransactionUseCase(transactionRepository, accountRepository);
 
-    const transaction = await useCase.execute(validatedData as any);
+    const transaction = await useCase.execute(validatedData as any, userId);
 
     return NextResponse.json(transaction, { status: 201 });
   } catch (error) {

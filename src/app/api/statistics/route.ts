@@ -141,6 +141,14 @@ export const GET = withAuth(async (req: NextRequest, userId: string) => {
     const searchParams = req.nextUrl.searchParams;
     const period = searchParams.get('period') || 'month';
 
+    const validPeriods = ['month', 'quarter', 'year', 'all'];
+    if (!validPeriods.includes(period)) {
+      return NextResponse.json(
+        { error: `Invalid period. Must be one of: ${validPeriods.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     const transactionRepository = new PrismaTransactionRepository();
     const accountRepository = new PrismaAccountRepository();
     const useCase = new GetStatisticsUseCase(transactionRepository, accountRepository);

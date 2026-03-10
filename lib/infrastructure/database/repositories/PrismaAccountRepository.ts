@@ -17,9 +17,9 @@ export class PrismaAccountRepository implements IAccountRepository {
     return account as Account | null;
   }
 
-  async findByType(type: string): Promise<Account[]> {
+  async findByType(type: string, userId: string): Promise<Account[]> {
     const accounts = await prisma.account.findMany({
-      where: { type: type as any },
+      where: { type: type as any, userId },
       orderBy: { createdAt: 'desc' },
     });
     return accounts as Account[];
@@ -56,9 +56,9 @@ export class PrismaAccountRepository implements IAccountRepository {
     });
   }
 
-  async getTotalBalance(): Promise<number> {
+  async getTotalBalance(userId: string): Promise<number> {
     const accounts = await prisma.account.findMany({
-      where: { isActive: true },
+      where: { isActive: true, userId },
       select: { balance: true },
     });
 
