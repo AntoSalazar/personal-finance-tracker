@@ -90,6 +90,7 @@ model Account {
   updatedAt     DateTime       @updatedAt
   transactions  Transaction[]
   subscriptions Subscription[]
+  debts         Debt[]
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -255,10 +256,12 @@ model Debt {
   isPaid        Boolean      @default(false)
   paidDate      DateTime?
   transactionId String? // Reference to transaction created when paid
+  accountId     String? // Account from which money was lent
   notes         String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account       Account?     @relation(fields: [accountId], references: [id])
 
   @@index([userId])
   @@index([isPaid])

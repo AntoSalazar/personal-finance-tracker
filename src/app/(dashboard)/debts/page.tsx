@@ -221,6 +221,7 @@ export default function DebtsPage() {
               <TableRow>
                 <TableHead>Person</TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Account</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
@@ -238,6 +239,7 @@ export default function DebtsPage() {
                 >
                   <TableCell className="font-medium">{debt.personName}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{debt.description || '-'}</TableCell>
+                  <TableCell>{debt.account?.name || '-'}</TableCell>
                   <TableCell>
                     {debt.dueDate ? format(new Date(debt.dueDate), "MMM dd, yyyy") : '-'}
                   </TableCell>

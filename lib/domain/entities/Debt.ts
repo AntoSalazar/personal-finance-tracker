@@ -13,6 +13,7 @@ export interface Debt {
   isPaid: boolean;
   paidDate?: Date;
   transactionId?: string; // Transaction created when debt is marked as paid
+  accountId?: string; // Account from which money was lent
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +25,7 @@ export interface CreateDebtDTO {
   amount: number;
   description?: string;
   dueDate?: Date;
+  accountId?: string; // Account from which money was lent
   notes?: string;
 }
 

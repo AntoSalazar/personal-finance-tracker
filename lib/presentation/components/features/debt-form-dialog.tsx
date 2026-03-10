@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -30,6 +30,13 @@ import {
 } from "@/lib/presentation/components/ui/form"
 import { Input } from "@/lib/presentation/components/ui/input"
 import { Textarea } from "@/lib/presentation/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/lib/presentation/components/ui/select"
 
 const debtSchema = z.object({
   personName: z.string().min(2, "Person name must be at least 2 characters"),
@@ -38,6 +45,7 @@ const debtSchema = z.object({
   }),
   description: z.string().optional(),
   dueDate: z.string().optional(),
+  accountId: z.string().optional(),
   notes: z.string().optional(),
 })
 
@@ -51,6 +59,7 @@ interface DebtFormDialogProps {
     amount: number
     description?: string
     dueDate?: string
+    accountId?: string
     notes?: string
   }
   open?: boolean
@@ -61,6 +70,15 @@ export function DebtFormDialog({ children, debt, open: controlledOpen, onOpenCha
   const [internalOpen, setInternalOpen] = React.useState(false)
   const queryClient = useQueryClient()
   const isEditing = !!debt
+
+  // Fetch accounts for the source account dropdown
+  const { data: accountsData } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: async () => {
+      const response = await axios.get('/api/accounts')
+      return response.data
+    },
+  })
 
   // Use controlled or uncontrolled state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
@@ -79,6 +97,7 @@ export function DebtFormDialog({ children, debt, open: controlledOpen, onOpenCha
       amount: debt?.amount?.toString() || "",
       description: debt?.description || "",
       dueDate: debt?.dueDate ? format(new Date(debt.dueDate), "yyyy-MM-dd") : "",
+      accountId: debt?.accountId || "",
       notes: debt?.notes || "",
     },
   })
@@ -91,6 +110,7 @@ export function DebtFormDialog({ children, debt, open: controlledOpen, onOpenCha
         amount: debt?.amount?.toString() || "",
         description: debt?.description || "",
         dueDate: debt?.dueDate ? format(new Date(debt.dueDate), "yyyy-MM-dd") : "",
+        accountId: debt?.accountId || "",
         notes: debt?.notes || "",
       })
     }
@@ -103,6 +123,7 @@ export function DebtFormDialog({ children, debt, open: controlledOpen, onOpenCha
         ...data,
         amount: parseFloat(data.amount),
         dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
+        accountId: data.accountId || undefined,
       }
 
       if (isEditing) {
@@ -116,6 +137,7 @@ export function DebtFormDialog({ children, debt, open: controlledOpen, onOpenCha
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['debts'] })
       queryClient.invalidateQueries({ queryKey: ['debts', 'summary'] })
+      queryClient.invalidateQueries({ queryKey: ['accounts'] })
       toast.success(isEditing ? "Debt updated successfully!" : "Debt added successfully!")
       setOpen(false)
       form.reset()
@@ -179,6 +201,35 @@ export function DebtFormDialog({ children, debt, open: controlledOpen, onOpenCha
                       )}
                     />
                   </div>
+
+                  {/* Source Account */}
+                  <FormField
+                    control={form.control}
+                    name="accountId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Source Account</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select account" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {accountsData?.accounts?.map((account: any) => (
+                              <SelectItem key={account.id} value={account.id}>
+                                {account.name} ({account.type})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   {/* Description - Full width */}
                   <FormField

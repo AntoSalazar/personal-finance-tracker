@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, createErrorResponse } from '@/lib/infrastructure/api/auth-middleware';
 import { PrismaDebtRepository } from '@/lib/infrastructure/database/repositories/PrismaDebtRepository';
+import { PrismaAccountRepository } from '@/lib/infrastructure/database/repositories/PrismaAccountRepository';
 import { CreateDebtUseCase } from '@/lib/application/use-cases/debts/CreateDebtUseCase';
 import { GetDebtsUseCase } from '@/lib/application/use-cases/debts/GetDebtsUseCase';
 import { z, ZodError } from 'zod';
@@ -10,6 +11,7 @@ const createDebtSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
   description: z.string().optional(),
   dueDate: z.string().transform((val) => new Date(val)).optional(),
+  accountId: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -36,6 +38,9 @@ const createDebtSchema = z.object({
  *         paidDate:
  *           type: string
  *           format: date-time
+ *         accountId:
+ *           type: string
+ *           description: Account from which the money was lent
  *         notes:
  *           type: string
  *     CreateDebtInput:
@@ -53,6 +58,9 @@ const createDebtSchema = z.object({
  *         dueDate:
  *           type: string
  *           format: date
+ *         accountId:
+ *           type: string
+ *           description: Account from which the money was lent
  *         notes:
  *           type: string
  */
@@ -141,8 +149,9 @@ export const POST = withAuth(async (req: NextRequest, userId: string) => {
     const body = await req.json();
     const validatedData = createDebtSchema.parse(body);
 
-    const repository = new PrismaDebtRepository();
-    const useCase = new CreateDebtUseCase(repository);
+    const debtRepository = new PrismaDebtRepository();
+    const accountRepository = new PrismaAccountRepository();
+    const useCase = new CreateDebtUseCase(debtRepository, accountRepository);
 
     const debt = await useCase.execute({
       ...validatedData,

@@ -31,6 +31,7 @@ export class PrismaDebtRepository implements IDebtRepository {
     const debts = await prisma.debt.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      include: { account: true },
     });
 
     return debts as any;
@@ -39,6 +40,7 @@ export class PrismaDebtRepository implements IDebtRepository {
   async findById(id: string): Promise<Debt | null> {
     const debt = await prisma.debt.findUnique({
       where: { id },
+      include: { account: true },
     });
     return debt as any;
   }
@@ -63,21 +65,38 @@ export class PrismaDebtRepository implements IDebtRepository {
     const debts = await prisma.debt.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      include: { account: true },
     });
 
     return debts as any;
   }
 
   async create(data: CreateDebtDTO): Promise<Debt> {
-    const debt = await prisma.debt.create({
-      data: {
-        userId: data.userId,
-        personName: data.personName,
-        amount: data.amount,
-        description: data.description,
-        dueDate: data.dueDate,
-        notes: data.notes,
-      },
+    const debt = await prisma.$transaction(async (tx) => {
+      const created = await tx.debt.create({
+        data: {
+          userId: data.userId,
+          personName: data.personName,
+          amount: data.amount,
+          description: data.description,
+          dueDate: data.dueDate,
+          accountId: data.accountId,
+          notes: data.notes,
+        },
+        include: {
+          account: true,
+        },
+      });
+
+      // Deduct from account balance (money left the account to the person)
+      if (data.accountId) {
+        await tx.account.update({
+          where: { id: data.accountId },
+          data: { balance: { decrement: data.amount } },
+        });
+      }
+
+      return created;
     });
 
     return debt as any;
